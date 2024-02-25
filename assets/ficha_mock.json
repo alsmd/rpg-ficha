@@ -1,0 +1,369 @@
+{
+    "informacoes_gerais": [
+        {
+          "label": "Jogador",
+          "value": "Flavio"
+        },
+        {
+          "label": "Nome",
+          "value": "Kai"
+        },
+        {
+          "label": "Nome de Vigilante",
+          "value": "Protetor"
+        },
+        {
+          "label": "Idade",
+          "value": "26"
+        },
+        {
+          "label": "Sexo",
+          "value": "Masculino"
+        },
+        {
+          "label": "Altura",
+          "value": "177"
+        },
+        {
+          "label": "Planeta de Origem",
+          "value": "Terra"
+        },
+        {
+          "label": "Raça",
+          "value": "Terraquio"
+        },
+        {
+          "label": "Etnia",
+          "value": "Negro"
+        },
+        {
+          "label": "Origem na terra",
+          "value": "São Paulo"
+        },
+        {
+          "label": "Mutação",
+          "value": "Sentidos Aguçados"
+        },
+        {
+          "label": "Profissão",
+          "value": "Hacker"
+        },
+        {
+          "label": "Brutalidade",
+          "value": "Media"
+        }
+    ],
+    "atributos": [
+        {
+            "label": "Destreza",
+            "value": "5"
+        },
+        {
+            "label": "Foco",
+            "value": "5"
+        },
+        {
+            "label": "Força",
+            "value": "5"
+        },
+        {
+            "label": "Furtividade",
+            "value": "5"
+        },
+        {
+            "label": "Inteligencia",
+            "value": "5"
+        },
+        {
+            "label": "Percepção",
+            "value": "5"
+        }
+    ],
+    "conhecimentos": [
+        {
+            "label": "Biologia: ",
+            "value": "10"
+        },
+        {
+            "label": "Direito: ",
+            "value": "10"
+        },
+        {
+            "label": "Geografia: ",
+            "value": "10"
+        },
+        {
+            "label": "Hacker: ",
+            "value": "10"
+        },
+        {
+            "label": "Historia: ",
+            "value": "10"
+        },
+        {
+            "label": "Idioma: ",
+            "value": "10"
+        },
+        {
+            "label": "Intimidação: ",
+            "value": "10"
+        },
+        {
+            "label": "Investigação: ",
+            "value": "10"
+        },
+        {
+            "label": "Linguagem Corporal: ",
+            "value": "10"
+        },
+        {
+            "label": "Manipulação: ",
+            "value": "10"
+        },
+        {
+            "label": "Mecanica: ",
+            "value": "10"
+        },
+        {
+            "label": "Medicina: ",
+            "value": "10"
+        },
+        {
+            "label": "Planejamento: ",
+            "value": "10"
+        },
+        {
+            "label": "Quimica: ",
+            "value": "10"
+        },
+        {
+            "label": "Ufologia: ",
+            "value": "10"
+        }
+    ],
+    "combates": [
+        {
+          "label": "Arco e Besta: ",
+          "value": "10"
+        },
+        {
+          "label": "Armas de Veiculo: ",
+          "value": "10"
+        },
+        {
+          "label": "Arremessaveis: ",
+          "value": "10"
+        },
+        {
+          "label": "Contundentes Leve: ",
+          "value": "10"
+        },
+        {
+          "label": "Contundentes Pesado: ",
+          "value": "10"
+        },
+        {
+          "label": "Corpo a Corpo: ",
+          "value": "10"
+        },
+        {
+          "label": "Elementais a Distancia Leve: ",
+          "value": "10"
+        },
+        {
+          "label": "Elementais a Distancia Pesado: ",
+          "value": "10"
+        },
+        {
+          "label": "Elementais Melee Leve: ",
+          "value": "10"
+        },
+        {
+          "label": "Elementais Melee Pesado: ",
+          "value": "10"
+        },
+        {
+          "label": "Lamina Leve: ",
+          "value": "10"
+        },
+        {
+          "label": "Lamina Pesado: ",
+          "value": "10"
+        },
+        {
+          "label": "Metralhadora: ",
+          "value": "10"
+        },
+        {
+          "label": "Pistola e Sub Metralhadora: ",
+          "value": "10"
+        },
+        {
+          "label": "Rifle: ",
+          "value": "10"
+        },
+        {
+          "label": "Shotgun: ",
+          "value": "10"
+        }
+    ],
+    "fragmentos_magia": [
+      {
+        "label": "Elex184-fgdkk6",
+        "value": "-1 em dois atributos diferentes, - 1 furtividade -1 em força, +2 dano eletricidade, + 1 de esquiva, +1 em rolagem com armas desse tipo cobre conta por ser condutor de eletriciadade"
+      }
+    ],
+    "defesas": [
+      {
+        "label": "esquiva",
+        "value": "21/22"
+      },
+      {
+        "label": "pettty com armas elementais",
+        "value": "22/23"
+      },
+      {
+        "label": "armadura leve",
+        "value": ""
+      }
+    ],
+    "armas": [
+      {
+        "label": "rifle",
+        "value": ""
+      },
+      {
+        "label": "katana eletrica",
+        "value": ""
+      },
+      {
+        "label": "punho_elemental",
+        "value": ""
+      }
+    ],
+    "pratica_justica": "A prática de justiça de 'O Protetor' é uma dança meticulosa entre sombra e luz, uma sinfonia de punição e redenção que ecoa pelas ruas sombrias da cidade. Ele é a personificação da vigilância silenciosa, uma figura enigmática que paira sobre os becos escuros e os telhados, sempre atento aos suspiros de angústia dos inocentes e aos sussurros de conspiração dos malfeitores.Como o próprio nome sugere, 'O Protetor' não apenas enfrenta os vilões que assombram a cidade, mas também se dedica a proteger os mais vulneráveis e desamparados. Sua prática de justiça é moldada por uma profunda empatia pelos oprimidos e uma feroz determinação em garantir que nenhum inocente seja prejudicado enquanto ele vigia as sombras.No entanto, 'O Protetor' não é um ser de piedade cega. Ele entende que, às vezes, a única linguagem que os criminosos compreendem é a força. Em face do mal irreconciliável e da ameaça iminente aos inocentes, ele não hesitará em empregar suas habilidades formidáveis para neutralizar a ameaça, embora sempre busque minimizar danos desnecessários.",
+    "inventarios": {
+        "head": [
+          {
+            "nome": "Nome Item",
+            "descricao": "Item na cabeça",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          }
+        ],
+        "left-arm": [
+          {
+            "nome": "Nome Item",
+            "descricao": "Item no braço esquerdo",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          }
+        ],
+        "right-arm": [
+          {
+            "nome": "Nome Item",
+            "descricao": "Item no braço direito",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          }
+        ],
+        "upper-body": [
+          {
+            "nome": "Nome Item",
+            "descricao": "Item no upper body",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          }
+        ],
+        "left-leg": [
+          {
+            "nome": "Nome Item",
+            "descricao": "item perna esquerda",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          }
+        ],
+        "right-leg": [
+          {
+            "nome": "Nome Item",
+            "descricao": "item perna direita",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          },
+          {
+            "nome": "Nome Item",
+            "descricao": "Um item Qualquer",
+            "img": "./assets/images/gun.png",
+            "peso": "1kg"
+          }
+        ]
+    },
+    "dinheiro": "1000",
+    "backstory": "Um vigilante por acidente"
+}
