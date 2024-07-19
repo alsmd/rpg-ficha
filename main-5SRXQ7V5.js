@@ -1,23 +1,19 @@
 
-Para criar um componente Angular que busca dados de uma API e exibe-os em um gráfico usando Chart.js, siga os passos abaixo:
+Para resolver o problema de binding dos dados ao canvas, podemos utilizar o método de atualização dos dados diretamente no Chart.js. Aqui está uma abordagem alternativa:
 
 1. Instale as Dependências
-Primeiro, instale o Chart.js e a biblioteca ng2-charts para integrar o Chart.js com Angular.
+Já instalamos as dependências anteriormente:
 
 sh
 Copiar código
 npm install chart.js
 npm install ng2-charts
-2. Crie o Serviço para Buscar os Dados da API
-Crie um serviço Angular que buscará os dados da API.
-
-sh
-Copiar código
-ng generate service metricas
-Em metricas.service.ts, adicione o código para buscar os dados da API:
+2. Serviço para Buscar os Dados da API
+Como anteriormente, configure o serviço para buscar os dados da API.
 
 typescript
 Copiar código
+// metricas.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -46,18 +42,14 @@ export class MetricasService {
     return this.http.get<IIndicadoresAws>(this.apiUrl);
   }
 }
-3. Crie o Componente para Exibir o Gráfico
-Crie um componente que exibirá o gráfico.
-
-sh
-Copiar código
-ng generate component grafico-metricas
-Em grafico-metricas.component.ts, configure o gráfico:
+3. Componente para Exibir o Gráfico
+Vamos configurar o componente para exibir o gráfico e usar métodos do Chart.js para atualizar os dados.
 
 typescript
 Copiar código
+// grafico-metricas.component.ts
 import { Component, OnInit } from '@angular/core';
-import { ChartData, ChartOptions } from 'chart.js';
+import { Chart, ChartData, ChartOptions, ChartType } from 'chart.js';
 import { MetricasService, IIndicadoresAws } from '../metricas.service';
 
 @Component({
@@ -66,88 +58,58 @@ import { MetricasService, IIndicadoresAws } from '../metricas.service';
   styleUrls: ['./grafico-metricas.component.css']
 })
 export class GraficoMetricasComponent implements OnInit {
-  public chartData: ChartData<'bar'>;
-  public chartOptions: ChartOptions = {
-    responsive: true,
-    scales: {
-      x: {},
-      y: { beginAtZero: true }
-    }
-  };
+  public chart: any;
 
   constructor(private metricasService: MetricasService) {}
 
   ngOnInit(): void {
+    this.createChart();
     this.metricasService.getIndicadoresAws().subscribe((data: IIndicadoresAws) => {
-      this.chartData = this.transformDataToChart(data);
+      this.updateChartData(data);
     });
   }
 
-  transformDataToChart(data: IIndicadoresAws): ChartData<'bar'> {
+  createChart(): void {
+    const ctx = document.getElementById('myChart') as HTMLCanvasElement;
+    this.chart = new Chart(ctx, {
+      type: 'bar' as ChartType,
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Emitidos Manuais', data: [], backgroundColor: 'rgba(75, 192, 192, 0.6)' },
+          { label: 'Emitidos API', data: [], backgroundColor: 'rgba(153, 102, 255, 0.6)' },
+          { label: 'Emitidos Totais', data: [], backgroundColor: 'rgba(255, 159, 64, 0.6)' }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {},
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  updateChartData(data: IIndicadoresAws): void {
     const labels = data.aws_emitidos_totais.map(metrica => `${metrica.mes}/${metrica.ano}`);
     const manualData = data.aws_emitidos_manuais.map(metrica => +metrica.numero_emitido);
     const apiData = data.aws_emitidos_api.map(metrica => +metrica.numero_emitido);
     const totalData = data.aws_emitidos_totais.map(metrica => +metrica.numero_emitido);
 
-    return {
-      labels,
-      datasets: [
-        { label: 'Emitidos Manuais', data: manualData, backgroundColor: 'rgba(75, 192, 192, 0.6)' },
-        { label: 'Emitidos API', data: apiData, backgroundColor: 'rgba(153, 102, 255, 0.6)' },
-        { label: 'Emitidos Totais', data: totalData, backgroundColor: 'rgba(255, 159, 64, 0.6)' }
-      ]
-    };
+    this.chart.data.labels = labels;
+    this.chart.data.datasets[0].data = manualData;
+    this.chart.data.datasets[1].data = apiData;
+    this.chart.data.datasets[2].data = totalData;
+    this.chart.update();
   }
 }
-Em grafico-metricas.component.html, adicione o elemento do gráfico:
+4. Template do Componente
+No template, apenas referencie o canvas.
 
 html
 Copiar código
+<!-- grafico-metricas.component.html -->
 <div style="display: block;">
-  <canvas baseChart
-    [data]="chartData"
-    [options]="chartOptions"
-    chartType="bar">
-  </canvas>
+  <canvas id="myChart"></canvas>
 </div>
-4. Configure o Módulo
-Assegure-se de que o módulo importe os módulos necessários.
-
-Em app.module.ts, importe os módulos:
-
-typescript
-Copiar código
-import { HttpClientModule } from '@angular/common/http';
-import { NgChartsModule } from 'ng2-charts';
-
-@NgModule({
-  declarations: [
-    // outros componentes
-    GraficoMetricasComponent
-  ],
-  imports: [
-    // outros módulos
-    HttpClientModule,
-    NgChartsModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
-5. Use o Componente no Template
-Agora, use o componente onde deseja exibir o gráfico, por exemplo, em app.component.html:
-
-html
-Copiar código
-<app-grafico-metricas></app-grafico-metricas>
-6. Estilize o Componente
-Adicione estilos ao seu componente em grafico-metricas.component.css se necessário.
-
-css
-Copiar código
-/* Exemplo de estilos */
-canvas {
-  max-width: 100%;
-  height: auto;
-}
-Com esses pas
