@@ -1,3 +1,6 @@
+grafico-metricas.component.ts
+typescript
+Copy code
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Chart, ChartData, ChartType } from 'chart.js';
 import { MetricasService, IIndicadoresAws, IMetrica } from '../metricas.service';
@@ -98,12 +101,18 @@ export class GraficoMetricasComponent implements OnInit {
 
     const sortedKeys = Array.from(consolidatedData.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-    const labels = sortedKeys;
+    const labels = sortedKeys.map(key => this.formatDate(key));
     const manualData = sortedKeys.map(key => consolidatedData.get(key)!.manual);
     const apiData = sortedKeys.map(key => consolidatedData.get(key)!.api);
     const totalData = sortedKeys.map(key => consolidatedData.get(key)!.total);
 
     return { labels, manualData, apiData, totalData };
+  }
+
+  formatDate(key: string): string {
+    const [year, month] = key.split('-');
+    const monthNames = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    return `${monthNames[+month - 1]}/${year}`;
   }
 
   onYearChange(event: any): void {
@@ -112,7 +121,7 @@ export class GraficoMetricasComponent implements OnInit {
   }
 
   onChartTypeChange(event: any): void {
-    this.selectedChartType = event.target.value;
+    this.selectedChartType = event.target.value as ChartType;
     this.chart.destroy();
     this.createChart();
     this.updateChartData();
@@ -141,6 +150,6 @@ Copy code
   <canvas #chartCanvas></canvas>
 </div>
 3. Teste a Solução
-Agora, ao selecionar um tipo de gráfico no dropdown, o gráfico será atualizado para exibir o tipo selecionado. Caso o usuário selecione um ano específico, apenas os dados desse ano serão exibidos.
+Agora, ao selecionar um tipo de gráfico no dropdown, o gráfico será atualizado para exibir o tipo selecionado. Caso o usuário selecione um ano específico, apenas os dados desse ano serão exibidos. Os meses serão exibidos em formato de nome, por exemplo, "janeiro/2024".
 
-Com essa abordagem, você permite que o usuário selecione diferentes tipos de gráficos (barras, linhas, pizza) e filtre os dados por ano, garantindo uma experiência interativa e personalizável.
+Com essa abordagem, você permite que o usuário selecione diferentes tipos de gráficos (barras, linhas, pizza) e filtre os dados por ano, garantindo uma experiência interativa e personalizável, com os nomes dos meses formatados corretamente.
