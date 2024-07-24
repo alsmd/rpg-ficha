@@ -1,63 +1,130 @@
 import { Component, OnInit } from '@angular/core';
-import { MetricasService, IIndicadoresAws } from '../metricas.service';
+import { Chart, ChartData, ChartOptions, ChartType } from 'chart.js';
+import { MetricasService, IIndicadoresAws, IMetrica } from '../metricas.service';
 
 @Component({
-  selector: 'app-header-metricas',
-  templateUrl: './header-metricas.component.html',
-  styleUrls: ['./header-metricas.component.css']
+  selector: 'app-grafico-metricas',
+  templateUrl: './grafico-metricas.component.html',
+  styleUrls: ['./grafico-metricas.component.css']
 })
-export class HeaderMetricasComponent implements OnInit {
-  public totalManuais: number = 0;
-  public totalApi: number = 0;
-  public totalGeral: number = 0;
+export class GraficoMetricasComponent implements OnInit {
+  public chart: any;
+  public years: number[] = [];
+  public selectedYear: number | null = null;
+  private rawData: IIndicadoresAws | null = null;
 
   constructor(private metricasService: MetricasService) {}
 
   ngOnInit(): void {
+    this.createChart();
     this.metricasService.getIndicadoresAws().subscribe((data: IIndicadoresAws) => {
-      this.calculateTotals(data);
+      this.rawData = data;
+      this.extractYears(data);
+      this.updateChartData();
     });
   }
 
-  calculateTotals(data: IIndicadoresAws): void {
-    this.totalManuais = data.aws_emitidos_manuais.reduce((sum, metrica) => sum + +metrica.numero_emitido, 0);
-    this.totalApi = data.aws_emitidos_api.reduce((sum, metrica) => sum + +metrica.numero_emitido, 0);
-    this.totalGeral = data.aws_emitidos_totais.reduce((sum, metrica) => sum + +metrica.numero_emitido, 0);
+  createChart(): void {
+    const ctx = document.getElementById('myChart') as HTMLCanvasElement;
+    this.chart = new Chart(ctx, {
+      type: 'bar' as ChartType,
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Emitidos Manuais', data: [], backgroundColor: 'rgba(75, 192, 192, 0.6)' },
+          { label: 'Emitidos API', data: [], backgroundColor: 'rgba(153, 102, 255, 0.6)' },
+          { label: 'Emitidos Totais', data: [], backgroundColor: 'rgba(255, 159, 64, 0.6)' }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {},
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  extractYears(data: IIndicadoresAws): void {
+    const yearsSet = new Set<number>();
+    data.aws_emitidos_manuais.forEach(metrica => yearsSet.add(+metrica.ano));
+    data.aws_emitidos_api.forEach(metrica => yearsSet.add(+metrica.ano));
+    data.aws_emitidos_totais.forEach(metrica => yearsSet.add(+metrica.ano));
+    this.years = Array.from(yearsSet).sort();
+  }
+
+  updateChartData(): void {
+    if (!this.rawData) return;
+
+    const filteredData = this.filterDataByYear(this.rawData, this.selectedYear);
+    const processedData = this.processData(filteredData);
+    this.chart.data.labels = processedData.labels;
+    this.chart.data.datasets[0].data = processedData.manualData;
+    this.chart.data.datasets[1].data = processedData.apiData;
+    this.chart.data.datasets[2].data = processedData.totalData;
+    this.chart.update();
+  }
+
+  filterDataByYear(data: IIndicadoresAws, year: number | null): IIndicadoresAws {
+    if (year === null) return data;
+
+    const filterByYear = (metrica: IMetrica) => +metrica.ano === year;
+
+    return {
+      aws_emitidos_manuais: data.aws_emitidos_manuais.filter(filterByYear),
+      aws_emitidos_api: data.aws_emitidos_api.filter(filterByYear),
+      aws_emitidos_totais: data.aws_emitidos_totais.filter(filterByYear),
+    };
+  }
+
+  processData(data: IIndicadoresAws) {
+    const consolidatedData = new Map<string, { manual: number, api: number, total: number }>();
+
+    const addData = (metrica: IMetrica, type: 'manual' | 'api' | 'total') => {
+      const key = `${metrica.ano}-${metrica.mes}`;
+      if (!consolidatedData.has(key)) {
+        consolidatedData.set(key, { manual: 0, api: 0, total: 0 });
+      }
+      consolidatedData.get(key)![type] += +metrica.numero_emitido;
+    };
+
+    data.aws_emitidos_manuais.forEach(metrica => addData(metrica, 'manual'));
+    data.aws_emitidos_api.forEach(metrica => addData(metrica, 'api'));
+    data.aws_emitidos_totais.forEach(metrica => addData(metrica, 'total'));
+
+    const sortedKeys = Array.from(consolidatedData.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+    const labels = sortedKeys;
+    const manualData = sortedKeys.map(key => consolidatedData.get(key)!.manual);
+    const apiData = sortedKeys.map(key => consolidatedData.get(key)!.api);
+    const totalData = sortedKeys.map(key => consolidatedData.get(key)!.total);
+
+    return { labels, manualData, apiData, totalData };
+  }
+
+  onYearChange(event: any): void {
+    this.selectedYear = event.target.value ? +event.target.value : null;
+    this.updateChartData();
   }
 }
-3. Template do Componente do Header
-No arquivo header-metricas.component.html, exiba as informações gerais.
+2. Atualize o Template do Componente
+Adicione um seletor de ano no template para permitir que o usuário selecione um ano específico.
 
 html
 Copy code
-<!-- header-metricas.component.html -->
-<div class="header-metricas">
-  <h1>Resumo das Métricas</h1>
-  <p>Total Emitidos Manuais: {{ totalManuais }}</p>
-  <p>Total Emitidos API: {{ totalApi }}</p>
-  <p>Total Emitidos Totais: {{ totalGeral }}</p>
+<!-- grafico-metricas.component.html -->
+<div style="display: block;">
+  <label for="year-select">Selecione o Ano:</label>
+  <select id="year-select" (change)="onYearChange($event)">
+    <option value="">Todos</option>
+    <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+  </select>
 </div>
-4. Estilize o Header
-Adicione estilos ao seu componente em header-metricas.component.css se necessário.
+<div style="display: block;">
+  <canvas id="myChart"></canvas>
+</div>
+3. Teste a Solução
+Agora, ao selecionar um ano no dropdown, o gráfico será atualizado para exibir apenas os dados do ano selecionado. Caso o usuário selecione "Todos", todos os dados serão exibidos.
 
-css
-Copy code
-/* header-metricas.component.css */
-.header-metricas {
-  background-color: #f8f9fa;
-  padding: 1em;
-  border-radius: 0.5em;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  text-align: center;
-  margin-bottom: 1em;
-}
-
-.header-metricas h1 {
-  margin-bottom: 0.5em;
-  font-size: 1.5em;
-}
-
-.header-metricas p {
-  margin: 0.5em 0;
-  font-size: 1.2em;
-                                                      }
+Com essa abordagem, você permite que o usuário filtre os dados por ano e garante que o gráfico
