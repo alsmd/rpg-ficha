@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { Chart, ChartData, ChartOptions, ChartType } from 'chart.js';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Chart, ChartData, ChartType } from 'chart.js';
 import { MetricasService, IIndicadoresAws, IMetrica } from '../metricas.service';
 
 @Component({
@@ -8,9 +8,12 @@ import { MetricasService, IIndicadoresAws, IMetrica } from '../metricas.service'
   styleUrls: ['./grafico-metricas.component.css']
 })
 export class GraficoMetricasComponent implements OnInit {
+  @ViewChild('chartCanvas', { static: true }) chartCanvas!: ElementRef;
   public chart: any;
   public years: number[] = [];
   public selectedYear: number | null = null;
+  public chartTypes: ChartType[] = ['bar', 'line', 'pie'];
+  public selectedChartType: ChartType = 'bar';
   private rawData: IIndicadoresAws | null = null;
 
   constructor(private metricasService: MetricasService) {}
@@ -25,9 +28,9 @@ export class GraficoMetricasComponent implements OnInit {
   }
 
   createChart(): void {
-    const ctx = document.getElementById('myChart') as HTMLCanvasElement;
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
     this.chart = new Chart(ctx, {
-      type: 'bar' as ChartType,
+      type: this.selectedChartType,
       data: {
         labels: [],
         datasets: [
@@ -39,8 +42,8 @@ export class GraficoMetricasComponent implements OnInit {
       options: {
         responsive: true,
         scales: {
-          x: {},
-          y: { beginAtZero: true }
+          x: { display: this.selectedChartType !== 'pie' },
+          y: { display: this.selectedChartType !== 'pie', beginAtZero: true }
         }
       }
     });
@@ -107,9 +110,16 @@ export class GraficoMetricasComponent implements OnInit {
     this.selectedYear = event.target.value ? +event.target.value : null;
     this.updateChartData();
   }
+
+  onChartTypeChange(event: any): void {
+    this.selectedChartType = event.target.value;
+    this.chart.destroy();
+    this.createChart();
+    this.updateChartData();
+  }
 }
 2. Atualize o Template do Componente
-Adicione um seletor de ano no template para permitir que o usuário selecione um ano específico.
+Adicione um seletor de tipo de gráfico no template para permitir que o usuário selecione qual gráfico exibir.
 
 html
 Copy code
@@ -122,9 +132,15 @@ Copy code
   </select>
 </div>
 <div style="display: block;">
-  <canvas id="myChart"></canvas>
+  <label for="chart-type-select">Selecione o Tipo de Gráfico:</label>
+  <select id="chart-type-select" (change)="onChartTypeChange($event)">
+    <option *ngFor="let chartType of chartTypes" [value]="chartType">{{ chartType }}</option>
+  </select>
+</div>
+<div style="display: block;">
+  <canvas #chartCanvas></canvas>
 </div>
 3. Teste a Solução
-Agora, ao selecionar um ano no dropdown, o gráfico será atualizado para exibir apenas os dados do ano selecionado. Caso o usuário selecione "Todos", todos os dados serão exibidos.
+Agora, ao selecionar um tipo de gráfico no dropdown, o gráfico será atualizado para exibir o tipo selecionado. Caso o usuário selecione um ano específico, apenas os dados desse ano serão exibidos.
 
-Com essa abordagem, você permite que o usuário filtre os dados por ano e garante que o gráfico
+Com essa abordagem, você permite que o usuário selecione diferentes tipos de gráficos (barras, linhas, pizza) e filtre os dados por ano, garantindo uma experiência interativa e personalizável.
