@@ -287,3 +287,56 @@
     </script>
 </body>
 </html>
+from flask import Flask, request, jsonify, send_from_directory
+import ast
+import json
+
+app = Flask(__name__)
+
+# Função para analisar o arquivo models.py e extrair classes e relações
+def analyze_models(file_content):
+    tree = ast.parse(file_content)
+    classes = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            class_name = node.name
+            fields = []
+            for item in node.body:
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if isinstance(target, ast.Name):
+                            field_name = target.id
+                            field_type = None
+                            related_model = None
+                            if isinstance(item.value, ast.Call):
+                                field_type = item.value.func.attr
+                                if field_type in ["ForeignKey", "ManyToManyField"]:
+                                    if isinstance(item.value.args[0], ast.Constant):
+                                        related_model = item.value.args[0].value
+                                    elif isinstance(item.value.args[0], ast.Name):
+                                        related_model = item.value.args[0].id
+                                    elif isinstance(item.value.args[0], ast.Attribute):
+                                        related_model = item.value.args[0].attr
+                                    fields.append(f"{field_name}: {field_type} to {related_model}")
+                                else:
+                                    field_type = "Other field type"
+                                    fields.append(f"{field_name}: {field_type}")
+                            else:
+                                field_type = "Other field type"
+                                fields.append(f"{field_name}: {field_type}")
+            classes[class_name] = fields
+    return classes
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+    file_content = file.read().decode('utf-8')
+    classes = analyze_models(file_content)
+    return jsonify(classes)
+
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
