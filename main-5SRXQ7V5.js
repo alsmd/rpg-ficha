@@ -1,48 +1,53 @@
-import matplotlib.pyplot as plt
+import ast
+import os
 import networkx as nx
-from django.conf import settings
-from django.apps import apps
-from django.db import models
+import matplotlib.pyplot as plt
 
-# Configura Django
-settings.configure(
-    INSTALLED_APPS=[
-        # Adicione o nome da sua aplicação aqui
-        'myapp',
-    ],
-    DATABASES={
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'db.sqlite3',
-        }
-    },
-)
+# Função para analisar o arquivo models.py e extrair classes e relações
+def analyze_models(file_path):
+    with open(file_path, "r") as file:
+        tree = ast.parse(file.read(), filename=file_path)
 
-# Inicialize Django
-import django
-django.setup()
+    classes = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            class_name = node.name
+            base_names = [base.id for base in node.bases if isinstance(base, ast.Name)]
+            if "models.Model" in base_names:
+                fields = []
+                for item in node.body:
+                    if isinstance(item, ast.Assign):
+                        for target in item.targets:
+                            if isinstance(target, ast.Name):
+                                field_name = target.id
+                                field_type = item.value.func.attr
+                                if field_type in ["ForeignKey", "ManyToManyField"]:
+                                    related_model = item.value.args[0].id
+                                    fields.append((field_name, field_type, related_model))
+                classes[class_name] = fields
+    return classes
 
-# Crie um grafo direcionado
-G = nx.DiGraph()
+# Função para criar o diagrama
+def create_diagram(classes):
+    G = nx.DiGraph()
+    
+    # Adicionar nós e arestas
+    for class_name, fields in classes.items():
+        G.add_node(class_name, shape='box', style='filled', color='lightblue')
+        for field_name, field_type, related_model in fields:
+            if field_type in ["ForeignKey", "ManyToManyField"]:
+                G.add_edge(class_name, related_model)
+    
+    # Desenhar o grafo
+    pos = nx.spring_layout(G)
+    plt.figure(figsize=(12, 10))
+    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray')
+    plt.title('Diagrama de Relacionamentos dos Modelos Django')
+    plt.show()
 
-# Obtenha todos os modelos
-for model in apps.get_models():
-    model_name = model.__name__
-    # Adiciona o nó para o modelo
-    G.add_node(model_name, shape='box', style='filled', color='lightblue')
+# Caminho para o arquivo models.py
+models_file_path = "myapp/models.py"
 
-    # Adiciona arestas para as relações ForeignKey
-    for field in model._meta.get_fields():
-        if isinstance(field, models.ForeignKey):
-            related_model = field.related_model.__name__
-            # Adiciona uma aresta do modelo para o modelo relacionado
-            G.add_edge(model_name, related_model)
-
-# Definir a posição dos nós
-pos = nx.spring_layout(G)
-
-# Desenhar o grafo
-plt.figure(figsize=(12, 10))
-nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray')
-plt.title('Diagrama de Relacionamentos dos Modelos Django')
-plt.show()
+# Analisar os modelos e criar o diagrama
+classes = analyze_models(models_file_path)
+create_diagram(classes)
