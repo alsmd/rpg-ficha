@@ -32,8 +32,8 @@ def analyze_models(file_path):
             classes[class_name] = fields
     return classes
 
-# Função para criar o diagrama
-def create_diagram(classes):
+# Função para criar o grafo completo
+def create_full_graph(classes):
     G = nx.DiGraph()
     
     # Adicionar nós e arestas
@@ -43,24 +43,52 @@ def create_diagram(classes):
             if field_type in ["ForeignKey", "ManyToManyField"]:
                 G.add_edge(class_name, related_model)
     
-    # Usar o layout 'spring' com ajustes para espaçar os nós
-    pos = nx.spring_layout(G, k=1.5, iterations=50)  # Ajuste de k e iterations para espaçar melhor os nós
-    plt.figure(figsize=(20, 16))  # Ajustar o tamanho da figura conforme necessário
+    return G
+
+# Função para criar um subgrafo com as relações de um nó específico
+def create_subgraph(G, node):
+    neighbors = list(G.neighbors(node))
+    sub_nodes = [node] + neighbors
+    sub_graph = G.subgraph(sub_nodes).copy()
+    return sub_graph
+
+# Função para desenhar o grafo
+def draw_graph(G, title="Diagrama de Relacionamentos dos Modelos Django"):
+    pos = nx.spring_layout(G, k=1.5, iterations=50)
+    plt.figure(figsize=(20, 16))
     nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray')
-    plt.title('Diagrama de Relacionamentos dos Modelos Django')
-    plt.show()
+    plt.title(title)
+    return pos
+
+# Callback para eventos de clique nos nós
+def on_click(event, G, pos):
+    x, y = event.xdata, event.ydata
+    if x is not None and y is not None:
+        for node in G.nodes():
+            node_x, node_y = pos[node]
+            distance = ((x - node_x) ** 2 + (y - node_y) ** 2) ** 0.5
+            if distance < 0.05:  # Ajustar conforme necessário
+                plt.clf()
+                sub_graph = create_subgraph(G, node)
+                sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
+                nx.draw(sub_graph, sub_pos, with_labels=True, node_size=3000, node_color='lightgreen', font_size=10, font_weight='bold', edge_color='gray')
+                plt.title(f'Relações de {node}')
+                plt.draw()
+                break
 
 # Caminho para o arquivo models.py
 models_file_path = "myapp/models.py"
 
-# Analisar os modelos e criar o diagrama
+# Analisar os modelos e criar o grafo completo
 classes = analyze_models(models_file_path)
+G = create_full_graph(classes)
 
-# Verificação de depuração
-print("Classes e Relações Encontradas:")
-for class_name, fields in classes.items():
-    print(f"Classe: {class_name}")
-    for field in fields:
-        print(f"  Campo: {field[0]}, Tipo: {field[1]}, Relacionado a: {field[2]}")
+# Desenhar o grafo completo
+pos = draw_graph(G)
 
-create_diagram(classes)
+# Conectar o callback de clique
+fig = plt.gcf()
+fig.canvas.mpl_connect('button_press_event', lambda event: on_click(event, G, pos))
+
+# Exibir o grafo
+plt.show()
