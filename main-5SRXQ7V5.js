@@ -1,12 +1,17 @@
+pip install Flask
+Código do Backend (app.py):
+
+python
+Copy code
+from flask import Flask, request, jsonify, send_from_directory
 import ast
-import networkx as nx
-import matplotlib.pyplot as plt
+import json
+
+app = Flask(__name__)
 
 # Função para analisar o arquivo models.py e extrair classes e relações
-def analyze_models(file_path):
-    with open(file_path, "r") as file:
-        tree = ast.parse(file.read(), filename=file_path)
-
+def analyze_models(file_content):
+    tree = ast.parse(file_content)
     classes = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
@@ -22,7 +27,6 @@ def analyze_models(file_path):
                             if isinstance(item.value, ast.Call):
                                 field_type = item.value.func.attr
                                 if field_type in ["ForeignKey", "ManyToManyField"]:
-                                    # Verificar se o argumento é uma string (nome do modelo)
                                     if isinstance(item.value.args[0], ast.Constant):
                                         related_model = item.value.args[0].value
                                     elif isinstance(item.value.args[0], ast.Name):
@@ -34,69 +38,149 @@ def analyze_models(file_path):
             classes[class_name] = fields
     return classes
 
-# Função para criar o grafo completo
-def create_full_graph(classes):
-    G = nx.DiGraph()
-    
-    # Adicionar nós e arestas
-    for class_name, fields in classes.items():
-        G.add_node(class_name)
-        for field in fields:
-            if "to" in field:
-                parts = field.split("to")
-                if len(parts) > 1:
-                    related_model = parts[-1].strip().split()[0]
-                    if related_model in classes:
-                        G.add_edge(class_name, related_model)
-                        # Adicionar também as relações inversas
-                        G.add_edge(related_model, class_name)
-    
-    return G
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+    file_content = file.read().decode('utf-8')
+    classes = analyze_models(file_content)
+    return jsonify(classes)
 
-# Função para criar um subgrafo com a classe solicitada e suas relações
-def create_subgraph(G, class_name):
-    if class_name not in G:
-        print(f"Classe '{class_name}' não encontrada.")
-        return None
-    
-    # Obter todos os vizinhos da classe e também adicionar as relações inversas
-    neighbors = set(G.neighbors(class_name))
-    additional_nodes = set(neighbors)
-    
-    for neighbor in neighbors:
-        additional_nodes.update(G.neighbors(neighbor))
-    
-    sub_nodes = list(additional_nodes) + [class_name]
-    sub_graph = G.subgraph(sub_nodes).copy()
-    return sub_graph
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
 
-# Função para desenhar o grafo
-def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
-    fig, ax = plt.subplots(figsize=(20, 16))
-    
-    # Desenhar o grafo
-    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o', alpha=0.7, ax=ax)
-    
-    plt.title(title)
-    plt.show(block=True)  # Manter a janela aberta até que o usuário a feche
+if __name__ == '__main__':
+    app.run(debug=True)
+2. Criar a Interface HTML + JavaScript
+Código HTML (index.html):
 
-# Solicitar nome da classe ao usuário
-def get_class_name():
-    class_name = input("Digite o nome da classe para visualizar: ")
-    return class_name
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Modelos Django</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #graph {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualizador de Modelos Django</h1>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Enviar</button>
+    <div id="graph"></div>
 
-# Caminho para o arquivo models.py
-models_file_path = "myapp/models.py"
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Por favor, selecione um arquivo.');
+                return;
+            }
 
-# Analisar os modelos e criar o grafo completo
-classes = analyze_models(models_file_path)
-G = create_full_graph(classes)
+            const formData = new FormData();
+            formData.append('file', file);
 
-# Solicitar a classe do usuário e desenhar o gráfico correspondente
-class_name = get_class_name()
-sub_graph = create_subgraph(G, class_name)
-if sub_graph:
-    sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50, scale=2)  # Ajustar a escala e iterações para melhor distribuição
-    draw_graph(sub_graph, sub_pos, title=f'Relações de {class_name}')
-else:
-    print("Nenhum gráfico a ser exibido.")
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                drawGraph(data);
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+
+        function drawGraph(classes) {
+            const width = 800;
+            const height = 600;
+            const svg = d3.select("#graph").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const nodes = [];
+            const links = [];
+
+            // Adicionar nós e arestas
+            Object.keys(classes).forEach(className => {
+                nodes.push({ id: className });
+                classes[className].forEach(field => {
+                    const parts = field.split("to");
+                    if (parts.length > 1) {
+                        const relatedModel = parts[1].trim().split()[0];
+                        if (classes[relatedModel]) {
+                            nodes.push({ id: relatedModel });
+                            links.push({ source: className, target: relatedModel });
+                        }
+                    }
+                });
+            });
+
+            // Criação do grafo
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id))
+                .force("charge", d3.forceManyBody())
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append("g")
+                .selectAll("line")
+                .data(links)
+                .enter().append("line")
+                .attr("stroke", "#999")
+                .attr("stroke-width", "1.5px");
+
+            const node = svg.append("g")
+                .selectAll("circle")
+                .data(nodes)
+                .enter().append("circle")
+                .attr("r", 5)
+                .attr("fill", "#69b3a2")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            node.append("title")
+                .text(d => d.id);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+    </script>
+</body>
+</html>
+Explicação
