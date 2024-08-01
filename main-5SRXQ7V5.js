@@ -43,9 +43,9 @@ def create_diagram(classes):
             if field_type in ["ForeignKey", "ManyToManyField"]:
                 G.add_edge(class_name, related_model)
     
-    # Desenhar o grafo
-    pos = nx.spring_layout(G)
-    plt.figure(figsize=(12, 10))
+    # Usar o layout 'shell' para separar melhor os nós
+    pos = nx.shell_layout(G)
+    plt.figure(figsize=(16, 12))  # Ajustar o tamanho da figura conforme necessário
     nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray')
     plt.title('Diagrama de Relacionamentos dos Modelos Django')
     plt.show()
