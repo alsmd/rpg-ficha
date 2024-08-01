@@ -45,6 +45,8 @@ def create_full_graph(classes):
                     related_model = parts[-1].strip().split()[0]
                     if related_model in classes:
                         G.add_edge(class_name, related_model)
+                        # Adicionar também as relações inversas
+                        G.add_edge(related_model, class_name)
     
     return G
 
@@ -53,14 +55,15 @@ def create_subgraph(G, class_name):
     if class_name not in G:
         print(f"Classe '{class_name}' não encontrada.")
         return None
-    neighbors = list(G.neighbors(class_name))
-    sub_nodes = [class_name] + neighbors
-    # Adiciona também classes que são referenciadas por outros nós
-    additional_nodes = set()
-    for node in sub_nodes:
-        additional_nodes.update(G.neighbors(node))
-    sub_nodes.extend(additional_nodes)
-    sub_nodes = list(set(sub_nodes))
+    
+    # Obter todos os vizinhos da classe e também adicionar as relações inversas
+    neighbors = set(G.neighbors(class_name))
+    additional_nodes = set(neighbors)
+    
+    for neighbor in neighbors:
+        additional_nodes.update(G.neighbors(neighbor))
+    
+    sub_nodes = list(additional_nodes) + [class_name]
     sub_graph = G.subgraph(sub_nodes).copy()
     return sub_graph
 
