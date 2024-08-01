@@ -20,9 +20,14 @@ def analyze_models(file_path):
                         for target in item.targets:
                             if isinstance(target, ast.Name):
                                 field_name = target.id
-                                field_type = item.value.func.attr
-                                if field_type in ["ForeignKey", "ManyToManyField"]:
-                                    related_model = item.value.args[0].id
+                                field_type = None
+                                related_model = None
+                                if isinstance(item.value, ast.Call):
+                                    field_type = item.value.func.attr
+                                    if field_type in ["ForeignKey", "ManyToManyField"]:
+                                        if isinstance(item.value.args[0], ast.Name):
+                                            related_model = item.value.args[0].id
+                                if field_type and related_model:
                                     fields.append((field_name, field_type, related_model))
                 classes[class_name] = fields
     return classes
@@ -50,4 +55,12 @@ models_file_path = "myapp/models.py"
 
 # Analisar os modelos e criar o diagrama
 classes = analyze_models(models_file_path)
+
+# Verificação de depuração
+print("Classes e Relações Encontradas:")
+for class_name, fields in classes.items():
+    print(f"Classe: {class_name}")
+    for field in fields:
+        print(f"  Campo: {field[0]}, Tipo: {field[1]}, Relacionado a: {field[2]}")
+
 create_diagram(classes)
