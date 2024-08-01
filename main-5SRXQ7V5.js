@@ -130,8 +130,8 @@
             svgElement.call(zoom);
 
             const simulation = d3.forceSimulation(data.nodes)
-                .force("link", d3.forceLink(data.links).id(d => d.id))
-                .force("charge", d3.forceManyBody())
+                .force("link", d3.forceLink(data.links).id(d => d.id).distance(100)) // Ajuste o valor de distância
+                .force("charge", d3.forceManyBody().strength(-200)) // Ajuste a força de repulsão
                 .force("center", d3.forceCenter(width / 2, height / 2));
 
             const link = svgElement.append("g")
