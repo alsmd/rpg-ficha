@@ -12,24 +12,24 @@ def analyze_models(file_path):
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
             class_name = node.name
-            base_names = [base.id for base in node.bases if isinstance(base, ast.Name)]
-            if "models.Model" in base_names:
-                fields = []
-                for item in node.body:
-                    if isinstance(item, ast.Assign):
-                        for target in item.targets:
-                            if isinstance(target, ast.Name):
-                                field_name = target.id
-                                field_type = None
-                                related_model = None
-                                if isinstance(item.value, ast.Call):
-                                    field_type = item.value.func.attr
-                                    if field_type in ["ForeignKey", "ManyToManyField"]:
-                                        if isinstance(item.value.args[0], ast.Name):
-                                            related_model = item.value.args[0].id
-                                if field_type and related_model:
-                                    fields.append((field_name, field_type, related_model))
-                classes[class_name] = fields
+            fields = []
+            for item in node.body:
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if isinstance(target, ast.Name):
+                            field_name = target.id
+                            field_type = None
+                            related_model = None
+                            if isinstance(item.value, ast.Call):
+                                field_type = item.value.func.attr
+                                if field_type in ["ForeignKey", "ManyToManyField"]:
+                                    if isinstance(item.value.args[0], ast.Name):
+                                        related_model = item.value.args[0].id
+                                    elif isinstance(item.value.args[0], ast.Attribute):
+                                        related_model = item.value.args[0].attr
+                            if field_type and related_model:
+                                fields.append((field_name, field_type, related_model))
+            classes[class_name] = fields
     return classes
 
 # Função para criar o diagrama
