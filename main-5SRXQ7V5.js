@@ -1,61 +1,3 @@
-pip install Flask
-Código do Backend (app.py):
-
-python
-Copy code
-from flask import Flask, request, jsonify, send_from_directory
-import ast
-import json
-
-app = Flask(__name__)
-
-# Função para analisar o arquivo models.py e extrair classes e relações
-def analyze_models(file_content):
-    tree = ast.parse(file_content)
-    classes = {}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            class_name = node.name
-            fields = []
-            for item in node.body:
-                if isinstance(item, ast.Assign):
-                    for target in item.targets:
-                        if isinstance(target, ast.Name):
-                            field_name = target.id
-                            field_type = None
-                            related_model = None
-                            if isinstance(item.value, ast.Call):
-                                field_type = item.value.func.attr
-                                if field_type in ["ForeignKey", "ManyToManyField"]:
-                                    if isinstance(item.value.args[0], ast.Constant):
-                                        related_model = item.value.args[0].value
-                                    elif isinstance(item.value.args[0], ast.Name):
-                                        related_model = item.value.args[0].id
-                                    elif isinstance(item.value.args[0], ast.Attribute):
-                                        related_model = item.value.args[0].attr
-                            if field_type and related_model:
-                                fields.append(f"{field_name}: {field_type} to {related_model}")
-            classes[class_name] = fields
-    return classes
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    file = request.files['file']
-    file_content = file.read().decode('utf-8')
-    classes = analyze_models(file_content)
-    return jsonify(classes)
-
-@app.route('/')
-def index():
-    return send_from_directory('.', 'index.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
-2. Criar a Interface HTML + JavaScript
-Código HTML (index.html):
-
-html
-Copy code
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,9 +6,19 @@ Copy code
     <title>Diagrama de Modelos Django</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
         #graph {
-            width: 100%;
-            height: 600px;
+            width: 100vw;
+            height: 80vh;
+            border: 1px solid #ddd;
+            margin: 0;
+            padding: 0;
+        }
+        .node text {
+            font-size: 12px;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -74,9 +26,14 @@ Copy code
     <h1>Visualizador de Modelos Django</h1>
     <input type="file" id="fileInput" />
     <button onclick="uploadFile()">Enviar</button>
+    <br>
+    <input type="text" id="classNameInput" placeholder="Digite o nome da classe" />
+    <button onclick="filterGraph()">Filtrar Classe</button>
     <div id="graph"></div>
 
     <script>
+        let graphData = null;
+
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
@@ -94,54 +51,82 @@ Copy code
             })
             .then(response => response.json())
             .then(data => {
-                drawGraph(data);
+                graphData = data;
+                drawGraph(graphData);
             })
             .catch(error => console.error('Erro:', error));
         }
 
-        function drawGraph(classes) {
-            const width = 800;
-            const height = 600;
-            const svg = d3.select("#graph").append("svg")
-                .attr("width", width)
-                .attr("height", height);
+        function filterGraph() {
+            const className = document.getElementById('classNameInput').value;
+            if (!graphData || !className) {
+                alert('Por favor, envie o arquivo e digite o nome da classe.');
+                return;
+            }
+
+            const filteredData = createSubgraphData(graphData, className);
+            drawGraph(filteredData);
+        }
+
+        function createSubgraphData(classes, className) {
+            if (!(className in classes)) {
+                alert(`Classe '${className}' não encontrada.`);
+                return { nodes: [], links: [] };
+            }
 
             const nodes = [];
             const links = [];
+            const queue = [className];
+            const visited = new Set();
 
-            // Adicionar nós e arestas
-            Object.keys(classes).forEach(className => {
-                nodes.push({ id: className });
-                classes[className].forEach(field => {
-                    const parts = field.split("to");
-                    if (parts.length > 1) {
-                        const relatedModel = parts[1].trim().split()[0];
-                        if (classes[relatedModel]) {
-                            nodes.push({ id: relatedModel });
-                            links.push({ source: className, target: relatedModel });
+            while (queue.length) {
+                const node = queue.shift();
+                if (!visited.has(node)) {
+                    visited.add(node);
+                    nodes.push({ id: node });
+                    const fields = classes[node] || [];
+                    fields.forEach(field => {
+                        const parts = field.split("to");
+                        if (parts.length > 1) {
+                            const relatedModel = parts[1].trim().split()[0];
+                            if (classes[relatedModel] && !visited.has(relatedModel)) {
+                                nodes.push({ id: relatedModel });
+                                links.push({ source: node, target: relatedModel });
+                                queue.push(relatedModel);
+                            }
                         }
-                    }
-                });
-            });
+                    });
+                }
+            }
 
-            // Criação do grafo
-            const simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink(links).id(d => d.id))
+            return { nodes, links };
+        }
+
+        function drawGraph(data) {
+            const width = window.innerWidth;
+            const height = window.innerHeight * 0.8;
+            const svg = d3.select("#graph").selectAll("*").remove(); // Clear existing content
+            const svgElement = d3.select("#graph").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const simulation = d3.forceSimulation(data.nodes)
+                .force("link", d3.forceLink(data.links).id(d => d.id))
                 .force("charge", d3.forceManyBody())
                 .force("center", d3.forceCenter(width / 2, height / 2));
 
-            const link = svg.append("g")
+            const link = svgElement.append("g")
                 .selectAll("line")
-                .data(links)
+                .data(data.links)
                 .enter().append("line")
                 .attr("stroke", "#999")
                 .attr("stroke-width", "1.5px");
 
-            const node = svg.append("g")
+            const node = svgElement.append("g")
                 .selectAll("circle")
-                .data(nodes)
+                .data(data.nodes)
                 .enter().append("circle")
-                .attr("r", 5)
+                .attr("r", 10)
                 .attr("fill", "#69b3a2")
                 .call(d3.drag()
                     .on("start", dragstarted)
@@ -149,6 +134,16 @@ Copy code
                     .on("end", dragended));
 
             node.append("title")
+                .text(d => d.id);
+
+            svgElement.append("g")
+                .selectAll("text")
+                .data(data.nodes)
+                .enter().append("text")
+                .attr("x", d => d.x)
+                .attr("y", d => d.y)
+                .attr("dy", -15)
+                .attr("text-anchor", "middle")
                 .text(d => d.id);
 
             simulation.on("tick", () => {
@@ -161,6 +156,10 @@ Copy code
                 node
                     .attr("cx", d => d.x)
                     .attr("cy", d => d.y);
+
+                svgElement.selectAll("text")
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
             });
 
             function dragstarted(event, d) {
@@ -183,4 +182,3 @@ Copy code
     </script>
 </body>
 </html>
-Explicação
