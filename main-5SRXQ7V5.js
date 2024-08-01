@@ -43,9 +43,11 @@ def create_full_graph(classes):
         G.add_node(class_name, label=field_labels, shape='box', style='filled', color='lightblue')
         for field in fields:
             if "to" in field:
-                related_model = field.split("to")[-1].strip().split()[0]
-                if related_model in classes:
-                    G.add_edge(class_name, related_model)
+                parts = field.split("to")
+                if len(parts) > 1:
+                    related_model = parts[-1].strip().split()[0]
+                    if related_model in classes:
+                        G.add_edge(class_name, related_model)
     
     return G
 
