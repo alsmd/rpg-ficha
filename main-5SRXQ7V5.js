@@ -1,7 +1,6 @@
 import ast
 import networkx as nx
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
 # Função para analisar o arquivo models.py e extrair classes e relações
 def analyze_models(file_path):
@@ -29,8 +28,6 @@ def analyze_models(file_path):
                                         related_model = item.value.args[0].attr
                             if field_type and related_model:
                                 fields.append(f"{field_name}: {field_type} to {related_model}")
-                            else:
-                                fields.append(field_name)
             classes[class_name] = fields
     return classes
 
@@ -40,17 +37,14 @@ def create_full_graph(classes):
     
     # Adicionar nós e arestas
     for class_name, fields in classes.items():
-        field_labels = "\n".join(fields)
-        G.add_node(class_name, label=field_labels, shape='box', style='filled', color='lightblue')
+        G.add_node(class_name)
         for field in fields:
             if "to" in field:
                 parts = field.split("to")
                 if len(parts) > 1:
-                    related_model = parts[-1].strip().split()
-                    if related_model:
-                        related_model_name = related_model[0]
-                        if related_model_name in classes:
-                            G.add_edge(class_name, related_model_name)
+                    related_model = parts[-1].strip().split()[0]
+                    if related_model in classes:
+                        G.add_edge(class_name, related_model)
     
     return G
 
@@ -61,43 +55,22 @@ def create_subgraph(G, class_name):
         return None
     neighbors = list(G.neighbors(class_name))
     sub_nodes = [class_name] + neighbors
+    # Adiciona também classes que são referenciadas por outros nós
+    additional_nodes = set()
+    for node in sub_nodes:
+        additional_nodes.update(G.neighbors(node))
+    sub_nodes.extend(additional_nodes)
+    sub_nodes = list(set(sub_nodes))
     sub_graph = G.subgraph(sub_nodes).copy()
     return sub_graph
 
-# Função para desenhar o grafo com informações detalhadas ao passar o mouse
+# Função para desenhar o grafo
 def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     fig, ax = plt.subplots(figsize=(20, 16))
-    labels = nx.get_node_attributes(G, 'label')
     
     # Desenhar o grafo
-    nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o', alpha=0.7, ax=ax)
+    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o', alpha=0.7, ax=ax)
     
-    # Adicionar anotações interativas
-    annot = ax.annotate("", xy=(0,0), xytext=(20,20),
-                        textcoords="offset points",
-                        bbox=dict(boxstyle="round", fc="w"),
-                        arrowprops=dict(arrowstyle="wedge,tail_width=0.5", fc="w"))
-    annot.set_visible(False)
-    
-    def update_annot(node):
-        pos = pos[node]
-        annot.xy = pos
-        annot.set_text(labels[node])
-    
-    def hover(event):
-        vis = annot.get_visible()
-        if event.inaxes == ax:
-            for node, (x, y) in pos.items():
-                if (event.xdata - x) ** 2 + (event.ydata - y) ** 2 < 0.05:
-                    update_annot(node)
-                    annot.set_visible(True)
-                    fig.canvas.draw_idle()
-                    return
-            if vis:
-                annot.set_visible(False)
-                fig.canvas.draw_idle()
-    
-    fig.canvas.mpl_connect("motion_notify_event", hover)
     plt.title(title)
     plt.show(block=True)  # Manter a janela aberta até que o usuário a feche
 
