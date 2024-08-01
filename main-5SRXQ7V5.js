@@ -1,7 +1,6 @@
 import ast
 import networkx as nx
 import matplotlib.pyplot as plt
-from matplotlib.backend_bases import PickEvent
 
 # Função para analisar o arquivo models.py e extrair classes e relações
 def analyze_models(file_path):
@@ -55,20 +54,25 @@ def create_subgraph(G, node):
 # Função para desenhar o grafo
 def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     plt.figure(figsize=(20, 16))
-    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray', node_shape='o', pickable=True)
+    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray', node_shape='o')
     plt.title(title)
-    plt.show(block=False)  # Não bloquear o código para permitir a interação
+    plt.gca().set_aspect('equal', adjustable='box')  # Manter a proporção igual
+    plt.show(block=False)
 
-# Callback para eventos de clique nos nós
-def on_click(event):
-    if event.artist is not None:
-        node = event.artist.get_label()
-        if node in G:
-            plt.clf()  # Limpar a figura
-            sub_graph = create_subgraph(G, node)
-            sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
-            draw_graph(sub_graph, sub_pos, title=f'Relações de {node}')
-            plt.draw()
+# Função para capturar cliques
+def on_click(event, G, pos):
+    if event.xdata is not None and event.ydata is not None:
+        x, y = event.xdata, event.ydata
+        for node in G.nodes():
+            node_x, node_y = pos[node]
+            distance = ((x - node_x) ** 2 + (y - node_y) ** 2) ** 0.5
+            if distance < 0.1:  # Ajustar conforme necessário
+                plt.clf()
+                sub_graph = create_subgraph(G, node)
+                sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
+                draw_graph(sub_graph, sub_pos, title=f'Relações de {node}')
+                plt.draw()
+                plt.pause(0.1)  # Pausa para garantir a atualização visual
 
 # Caminho para o arquivo models.py
 models_file_path = "myapp/models.py"
@@ -83,7 +87,7 @@ draw_graph(G, pos)
 
 # Conectar o callback de clique
 fig = plt.gcf()
-fig.canvas.mpl_connect('pick_event', on_click)
+fig.canvas.mpl_connect('button_press_event', lambda event: on_click(event, G, pos))
 
 # Exibir o grafo
 plt.show()
