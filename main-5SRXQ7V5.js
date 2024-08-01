@@ -96,6 +96,8 @@
                     visited.add(node);
                     nodes.push({ id: node });
                     const fields = classes[node] || [];
+                    
+                    // Adiciona as relações da classe especificada
                     fields.forEach(field => {
                         const parts = field.split("to");
                         if (parts.length > 1) {
@@ -106,6 +108,22 @@
                                 queue.push(relatedModel);
                             }
                         }
+                    });
+
+                    // Adiciona as relações reversas
+                    Object.keys(classes).forEach(relatedClass => {
+                        const relatedFields = classes[relatedClass];
+                        relatedFields.forEach(field => {
+                            const parts = field.split("to");
+                            if (parts.length > 1) {
+                                const relatedModel = parts[1].trim().split()[0];
+                                if (relatedModel === node && !visited.has(relatedClass)) {
+                                    nodes.push({ id: relatedClass });
+                                    links.push({ source: relatedClass, target: node });
+                                    queue.push(relatedClass);
+                                }
+                            }
+                        });
                     });
                 }
             }
@@ -130,8 +148,8 @@
             svgElement.call(zoom);
 
             const simulation = d3.forceSimulation(data.nodes)
-                .force("link", d3.forceLink(data.links).id(d => d.id).distance(100)) // Ajuste o valor de distância
-                .force("charge", d3.forceManyBody().strength(-200)) // Ajuste a força de repulsão
+                .force("link", d3.forceLink(data.links).id(d => d.id).distance(150)) // Ajuste o valor de distância
+                .force("charge", d3.forceManyBody().strength(-300)) // Ajuste a força de repulsão
                 .force("center", d3.forceCenter(width / 2, height / 2));
 
             const link = svgElement.append("g")
