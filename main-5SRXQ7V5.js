@@ -1,6 +1,7 @@
 import ast
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 # Função para analisar o arquivo models.py e extrair classes e relações
 def analyze_models(file_path):
@@ -63,13 +64,23 @@ def create_subgraph(G, class_name):
     sub_graph = G.subgraph(sub_nodes).copy()
     return sub_graph
 
-# Função para desenhar o grafo
+# Função para desenhar o grafo com ajustes para a visualização
 def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     plt.figure(figsize=(20, 16))
+    
+    # Obter os rótulos dos nós
     labels = nx.get_node_attributes(G, 'label')
-    nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o')
-    plt.title(title)
+    
+    # Desenhar o grafo
+    nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o', alpha=0.7)
+    
+    # Ajustar o tamanho da figura para acomodar os rótulos
     plt.gca().set_aspect('equal', adjustable='box')  # Manter a proporção igual
+    
+    # Adicionar uma legenda para os nós
+    plt.title(title)
+    
+    # Mostrar o gráfico
     plt.show(block=True)  # Manter a janela aberta até que o usuário a feche
 
 # Solicitar nome da classe ao usuário
@@ -88,7 +99,7 @@ G = create_full_graph(classes)
 class_name = get_class_name()
 sub_graph = create_subgraph(G, class_name)
 if sub_graph:
-    sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
+    sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50, scale=2)  # Ajustar a escala e iterações para melhor distribuição
     draw_graph(sub_graph, sub_pos, title=f'Relações de {class_name}')
 else:
     print("Nenhum gráfico a ser exibido.")
