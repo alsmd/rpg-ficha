@@ -142,24 +142,26 @@
             const zoom = d3.zoom()
                 .scaleExtent([0.1, 10])
                 .on("zoom", (event) => {
-                    svgElement.attr("transform", event.transform);
+                    svgElement.select("g").attr("transform", event.transform);
                 });
 
             svgElement.call(zoom);
+
+            const container = svgElement.append("g"); // Container for nodes and links
 
             const simulation = d3.forceSimulation(data.nodes)
                 .force("link", d3.forceLink(data.links).id(d => d.id).distance(150)) // Ajuste o valor de distância
                 .force("charge", d3.forceManyBody().strength(-300)) // Ajuste a força de repulsão
                 .force("center", d3.forceCenter(width / 2, height / 2));
 
-            const link = svgElement.append("g")
+            const link = container.append("g")
                 .selectAll("line")
                 .data(data.links)
                 .enter().append("line")
                 .attr("stroke", "#999")
                 .attr("stroke-width", "1.5px");
 
-            const node = svgElement.append("g")
+            const node = container.append("g")
                 .selectAll("circle")
                 .data(data.nodes)
                 .enter().append("circle")
@@ -173,7 +175,7 @@
             node.append("title")
                 .text(d => d.id);
 
-            svgElement.append("g")
+            container.append("g")
                 .selectAll("text")
                 .data(data.nodes)
                 .enter().append("text")
@@ -194,7 +196,7 @@
                     .attr("cx", d => d.x)
                     .attr("cy", d => d.y);
 
-                svgElement.selectAll("text")
+                container.selectAll("text")
                     .attr("x", d => d.x)
                     .attr("y", d => d.y);
             });
