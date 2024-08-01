@@ -22,7 +22,10 @@ def analyze_models(file_path):
                             if isinstance(item.value, ast.Call):
                                 field_type = item.value.func.attr
                                 if field_type in ["ForeignKey", "ManyToManyField"]:
-                                    if isinstance(item.value.args[0], ast.Name):
+                                    # Verificar se o argumento é uma string (nome do modelo)
+                                    if isinstance(item.value.args[0], ast.Constant):
+                                        related_model = item.value.args[0].value
+                                    elif isinstance(item.value.args[0], ast.Name):
                                         related_model = item.value.args[0].id
                                     elif isinstance(item.value.args[0], ast.Attribute):
                                         related_model = item.value.args[0].attr
