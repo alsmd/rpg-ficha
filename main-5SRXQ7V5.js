@@ -64,23 +64,42 @@ def create_subgraph(G, class_name):
     sub_graph = G.subgraph(sub_nodes).copy()
     return sub_graph
 
-# Função para desenhar o grafo com ajustes para a visualização
+# Função para desenhar o grafo com informações detalhadas ao passar o mouse
 def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
-    plt.figure(figsize=(20, 16))
-    
-    # Obter os rótulos dos nós
+    fig, ax = plt.subplots(figsize=(20, 16))
     labels = nx.get_node_attributes(G, 'label')
     
     # Desenhar o grafo
-    nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o', alpha=0.7)
+    nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o', alpha=0.7, ax=ax)
     
-    # Ajustar o tamanho da figura para acomodar os rótulos
-    plt.gca().set_aspect('equal', adjustable='box')  # Manter a proporção igual
+    # Adicionar anotações interativas
+    annot = ax.annotate("", xy=(0,0), xytext=(20,20),
+                        textcoords="offset points",
+                        bbox=dict(boxstyle="round", fc="w"),
+                        arrowprops=dict(arrowstyle="wedge,tail_width=0.5", fc="w"))
+    annot.set_visible(False)
     
-    # Adicionar uma legenda para os nós
+    def update_annot(ind):
+        pos = ind["ind"]
+        node = list(G.nodes())[pos]
+        annot.xy = pos
+        annot.set_text(labels[node])
+    
+    def hover(event):
+        vis = annot.get_visible()
+        if event.inaxes == ax:
+            cont, ind = scatter.contains(event)
+            if cont:
+                update_annot(ind)
+                annot.set_visible(True)
+                fig.canvas.draw_idle()
+            else:
+                if vis:
+                    annot.set_visible(False)
+                    fig.canvas.draw_idle()
+    
+    fig.canvas.mpl_connect("motion_notify_event", hover)
     plt.title(title)
-    
-    # Mostrar o gráfico
     plt.show(block=True)  # Manter a janela aberta até que o usuário a feche
 
 # Solicitar nome da classe ao usuário
