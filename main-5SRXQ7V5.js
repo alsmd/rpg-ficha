@@ -45,9 +45,11 @@ def create_full_graph(classes):
             if "to" in field:
                 parts = field.split("to")
                 if len(parts) > 1:
-                    related_model = parts[-1].strip().split()[0]
-                    if related_model in classes:
-                        G.add_edge(class_name, related_model)
+                    related_model = parts[-1].strip().split()
+                    if related_model:
+                        related_model_name = related_model[0]
+                        if related_model_name in classes:
+                            G.add_edge(class_name, related_model_name)
     
     return G
 
