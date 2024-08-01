@@ -15,6 +15,7 @@
             border: 1px solid #ddd;
             margin: 0;
             padding: 0;
+            overflow: hidden;
         }
         .node text {
             font-size: 12px;
@@ -29,6 +30,7 @@
     <br>
     <input type="text" id="classNameInput" placeholder="Digite o nome da classe" />
     <button onclick="filterGraph()">Filtrar Classe</button>
+    <button onclick="showAll()">Mostrar Todos</button>
     <div id="graph"></div>
 
     <script>
@@ -66,6 +68,15 @@
 
             const filteredData = createSubgraphData(graphData, className);
             drawGraph(filteredData);
+        }
+
+        function showAll() {
+            if (!graphData) {
+                alert('Por favor, envie o arquivo primeiro.');
+                return;
+            }
+
+            drawGraph(graphData);
         }
 
         function createSubgraphData(classes, className) {
@@ -109,6 +120,14 @@
             const svgElement = d3.select("#graph").append("svg")
                 .attr("width", width)
                 .attr("height", height);
+
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 10])
+                .on("zoom", (event) => {
+                    svgElement.attr("transform", event.transform);
+                });
+
+            svgElement.call(zoom);
 
             const simulation = d3.forceSimulation(data.nodes)
                 .force("link", d3.forceLink(data.links).id(d => d.id))
