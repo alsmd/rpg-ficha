@@ -79,24 +79,23 @@ def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
                         arrowprops=dict(arrowstyle="wedge,tail_width=0.5", fc="w"))
     annot.set_visible(False)
     
-    def update_annot(ind):
-        pos = ind["ind"]
-        node = list(G.nodes())[pos]
+    def update_annot(node):
+        pos = pos[node]
         annot.xy = pos
         annot.set_text(labels[node])
     
     def hover(event):
         vis = annot.get_visible()
         if event.inaxes == ax:
-            cont, ind = scatter.contains(event)
-            if cont:
-                update_annot(ind)
-                annot.set_visible(True)
-                fig.canvas.draw_idle()
-            else:
-                if vis:
-                    annot.set_visible(False)
+            for node, (x, y) in pos.items():
+                if (event.xdata - x) ** 2 + (event.ydata - y) ** 2 < 0.05:
+                    update_annot(node)
+                    annot.set_visible(True)
                     fig.canvas.draw_idle()
+                    return
+            if vis:
+                annot.set_visible(False)
+                fig.canvas.draw_idle()
     
     fig.canvas.mpl_connect("motion_notify_event", hover)
     plt.title(title)
