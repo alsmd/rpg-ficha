@@ -60,7 +60,7 @@ def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray', node_shape='o')
     plt.title(title)
     plt.gca().set_aspect('equal', adjustable='box')  # Manter a proporção igual
-    plt.show(block=False)
+    plt.show(block=True)  # Manter a janela aberta até que o usuário a feche
 
 # Solicitar nome da classe ao usuário
 def get_class_name():
@@ -82,4 +82,3 @@ if sub_graph:
     draw_graph(sub_graph, sub_pos, title=f'Relações de {class_name}')
 else:
     print("Nenhum gráfico a ser exibido.")
-
