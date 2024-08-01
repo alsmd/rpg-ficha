@@ -27,7 +27,9 @@ def analyze_models(file_path):
                                     elif isinstance(item.value.args[0], ast.Attribute):
                                         related_model = item.value.args[0].attr
                             if field_type and related_model:
-                                fields.append((field_name, field_type, related_model))
+                                fields.append(f"{field_name} ({field_type} to {related_model})")
+                            else:
+                                fields.append(field_name)
             classes[class_name] = fields
     return classes
 
@@ -37,10 +39,13 @@ def create_full_graph(classes):
     
     # Adicionar nós e arestas
     for class_name, fields in classes.items():
-        G.add_node(class_name, shape='box', style='filled', color='lightblue')
-        for field_name, field_type, related_model in fields:
-            if field_type in ["ForeignKey", "ManyToManyField"]:
-                G.add_edge(class_name, related_model)
+        field_labels = "\n".join(fields)
+        G.add_node(class_name, label=field_labels, shape='box', style='filled', color='lightblue')
+        for field in fields:
+            if "to" in field:
+                related_model = field.split("to")[-1].strip().split()[0]
+                if related_model in classes:
+                    G.add_edge(class_name, related_model)
     
     return G
 
@@ -57,7 +62,8 @@ def create_subgraph(G, class_name):
 # Função para desenhar o grafo
 def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     plt.figure(figsize=(20, 16))
-    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray', node_shape='o')
+    labels = nx.get_node_attributes(G, 'label')
+    nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=8, font_weight='bold', edge_color='gray', node_shape='o')
     plt.title(title)
     plt.gca().set_aspect('equal', adjustable='box')  # Manter a proporção igual
     plt.show(block=True)  # Manter a janela aberta até que o usuário a feche
