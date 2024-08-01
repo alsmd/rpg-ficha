@@ -44,10 +44,13 @@ def create_full_graph(classes):
     
     return G
 
-# Função para criar um subgrafo com as relações de um nó específico
-def create_subgraph(G, node):
-    neighbors = list(G.neighbors(node))
-    sub_nodes = [node] + neighbors
+# Função para criar um subgrafo com a classe solicitada e suas relações
+def create_subgraph(G, class_name):
+    if class_name not in G:
+        print(f"Classe '{class_name}' não encontrada.")
+        return None
+    neighbors = list(G.neighbors(class_name))
+    sub_nodes = [class_name] + neighbors
     sub_graph = G.subgraph(sub_nodes).copy()
     return sub_graph
 
@@ -59,20 +62,10 @@ def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     plt.gca().set_aspect('equal', adjustable='box')  # Manter a proporção igual
     plt.show(block=False)
 
-# Função para capturar cliques
-def on_click(event, G, pos):
-    if event.xdata is not None and event.ydata is not None:
-        x, y = event.xdata, event.ydata
-        for node in G.nodes():
-            node_x, node_y = pos[node]
-            distance = ((x - node_x) ** 2 + (y - node_y) ** 2) ** 0.5
-            if distance < 0.1:  # Ajustar conforme necessário
-                plt.clf()
-                sub_graph = create_subgraph(G, node)
-                sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
-                draw_graph(sub_graph, sub_pos, title=f'Relações de {node}')
-                plt.draw()
-                plt.pause(0.1)  # Pausa para garantir a atualização visual
+# Solicitar nome da classe ao usuário
+def get_class_name():
+    class_name = input("Digite o nome da classe para visualizar: ")
+    return class_name
 
 # Caminho para o arquivo models.py
 models_file_path = "myapp/models.py"
@@ -81,13 +74,12 @@ models_file_path = "myapp/models.py"
 classes = analyze_models(models_file_path)
 G = create_full_graph(classes)
 
-# Desenhar o grafo completo
-pos = nx.spring_layout(G, k=1.5, iterations=50)
-draw_graph(G, pos)
+# Solicitar a classe do usuário e desenhar o gráfico correspondente
+class_name = get_class_name()
+sub_graph = create_subgraph(G, class_name)
+if sub_graph:
+    sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
+    draw_graph(sub_graph, sub_pos, title=f'Relações de {class_name}')
+else:
+    print("Nenhum gráfico a ser exibido.")
 
-# Conectar o callback de clique
-fig = plt.gcf()
-fig.canvas.mpl_connect('button_press_event', lambda event: on_click(event, G, pos))
-
-# Exibir o grafo
-plt.show()
