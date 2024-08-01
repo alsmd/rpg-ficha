@@ -27,7 +27,7 @@ def analyze_models(file_path):
                                     elif isinstance(item.value.args[0], ast.Attribute):
                                         related_model = item.value.args[0].attr
                             if field_type and related_model:
-                                fields.append(f"{field_name} ({field_type} to {related_model})")
+                                fields.append(f"{field_name}: {field_type} to {related_model}")
                             else:
                                 fields.append(field_name)
             classes[class_name] = fields
