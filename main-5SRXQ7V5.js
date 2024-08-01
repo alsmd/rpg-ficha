@@ -1,85 +1,61 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4; /* Cor de fundo neutra para contraste */
-}
-
-h1 {
-    color: #ff6600; /* Tom laranja para o título */
-    text-align: center;
-    margin-top: 20px;
-}
-
-input[type="text"], input[type="file"], button {
-    margin: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-input[type="text"] {
-    width: calc(100% - 22px); /* Ajuste para largura total menos padding e border */
-    max-width: 300px; /* Limita a largura máxima */
-}
-
-button {
-    background-color: #ff6600; /* Laranja para o fundo dos botões */
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #e65c00; /* Tom mais escuro de laranja para hover */
-}
-
-#graph {
-    width: 100vw;
-    height: 80vh;
-    border: 1px solid #ddd;
-    margin: 0 auto;
-    padding: 0;
-    overflow: hidden;
-    background-color: white; /* Cor de fundo para o gráfico */
-}
-
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; 
-    z-index: 1; 
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.4); 
-    padding-top: 60px;
-}
-
+/* Estilização do modal */
 .modal-content {
     background-color: #fff;
-    margin: 5% auto; 
-    padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     width: 80%; 
+    max-width: 600px; /* Limita a largura máxima do modal */
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative; /* Para posicionar o botão de fechar corretamente */
 }
 
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #ff6600; /* Cor laranja para o título no modal */
+}
+
+.modal-body {
+    font-size: 14px; /* Tamanho da fonte para o corpo do modal */
+    color: #333; /* Cor de texto escuro para contraste */
+    line-height: 1.6; /* Espaçamento entre linhas */
+}
+
+.modal-body p {
+    margin: 0;
+    padding: 5px 0;
+}
+
+.modal-body strong {
+    color: #ff6600; /* Destaque em laranja para nomes de campos */
+}
+
+/* Estilização do botão de fechar */
 .close {
     color: #ff6600;
-    float: right;
     font-size: 28px;
     font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
 }
 
 .close:hover,
 .close:focus {
-    color: #e65c00;
+    color: #e65c00; /* Tom mais escuro de laranja para o hover */
     text-decoration: none;
-    cursor: pointer;
 }
 
-input[type="file"] {
-    font-size: 14px; /* Ajuste o tamanho da fonte para o input de arquivo */
+.modal-content {
+    overflow: auto; /* Permite rolagem se o conteúdo for muito longo */
 }
