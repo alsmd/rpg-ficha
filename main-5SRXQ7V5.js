@@ -53,28 +53,29 @@ def create_subgraph(G, node):
     return sub_graph
 
 # Função para desenhar o grafo
-def draw_graph(G, title="Diagrama de Relacionamentos dos Modelos Django"):
-    pos = nx.spring_layout(G, k=1.5, iterations=50)
+def draw_graph(G, pos, title="Diagrama de Relacionamentos dos Modelos Django"):
     plt.figure(figsize=(20, 16))
     nx.draw(G, pos, with_labels=True, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', edge_color='gray')
     plt.title(title)
-    return pos
+    plt.show()
 
 # Callback para eventos de clique nos nós
 def on_click(event, G, pos):
     x, y = event.xdata, event.ydata
     if x is not None and y is not None:
+        closest_node = None
+        min_distance = float('inf')
         for node in G.nodes():
             node_x, node_y = pos[node]
             distance = ((x - node_x) ** 2 + (y - node_y) ** 2) ** 0.5
-            if distance < 0.05:  # Ajustar conforme necessário
-                plt.clf()
-                sub_graph = create_subgraph(G, node)
-                sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
-                nx.draw(sub_graph, sub_pos, with_labels=True, node_size=3000, node_color='lightgreen', font_size=10, font_weight='bold', edge_color='gray')
-                plt.title(f'Relações de {node}')
-                plt.draw()
-                break
+            if distance < min_distance:
+                closest_node = node
+                min_distance = distance
+        if min_distance < 0.1:  # Ajustar conforme necessário
+            sub_graph = create_subgraph(G, closest_node)
+            sub_pos = nx.spring_layout(sub_graph, k=1.5, iterations=50)
+            plt.clf()
+            draw_graph(sub_graph, sub_pos, title=f'Relações de {closest_node}')
 
 # Caminho para o arquivo models.py
 models_file_path = "myapp/models.py"
@@ -84,7 +85,8 @@ classes = analyze_models(models_file_path)
 G = create_full_graph(classes)
 
 # Desenhar o grafo completo
-pos = draw_graph(G)
+pos = nx.spring_layout(G, k=1.5, iterations=50)
+draw_graph(G, pos)
 
 # Conectar o callback de clique
 fig = plt.gcf()
