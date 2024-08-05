@@ -1,3 +1,4 @@
+HTML
 html
 Copy code
 <!DOCTYPE html>
@@ -6,15 +7,20 @@ Copy code
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload CSV</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="upload-container">
-        <input type="file" id="csvFileInput" accept=".csv">
-        <button id="uploadButton">Upload CSV</button>
+    <div class="container mt-5">
+        <div class="upload-container text-center">
+            <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+            <button id="selectFileButton" class="btn btn-primary mb-2">Select CSV</button>
+            <button id="uploadButton" class="btn btn-success" disabled>Upload CSV</button>
+        </div>
     </div>
-    
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
@@ -27,30 +33,20 @@ Copy code
     align-items: center;
     margin-top: 50px;
 }
-
-input[type="file"] {
-    margin-bottom: 10px;
-}
-
-button {
-    background-color: rgba(132, 113, 241, 0.75);
-    border: none;
-    padding: .8em 1.2em;
-    border-radius: 1.25em;
-    color: rgba(255, 255, 255, .75);
-    box-shadow: 1px 0 0 gray;
-    font-size: 1em;
-}
-
-button:hover {
-    cursor: pointer;
-    background-color: #8471F1;
-    font-family: Arial;
-}
 JavaScript (script.js)
 javascript
 Copy code
 $(document).ready(function() {
+    $('#selectFileButton').on('click', function() {
+        $('#csvFileInput').click();
+    });
+
+    $('#csvFileInput').on('change', function() {
+        if (this.files.length > 0) {
+            $('#uploadButton').prop('disabled', false);
+        }
+    });
+
     $('#uploadButton').on('click', function() {
         var fileInput = $('#csvFileInput')[0];
         var file = fileInput.files[0];
@@ -80,14 +76,12 @@ $(document).ready(function() {
 Explicação
 HTML:
 
-Um campo de entrada de arquivo (<input type="file">) que aceita apenas arquivos .csv.
-Um botão para iniciar o upload do arquivo.
+Inclui links para o Bootstrap CSS e JS.
+Um botão estilizado com Bootstrap (btn btn-primary) que abre a tela de seleção de arquivos ao clicar.
+Um botão estilizado com Bootstrap (btn btn-success) para enviar o arquivo, que é inicialmente desabilitado.
 CSS:
 
-Estilização básica para o botão e a entrada de arquivo, baseada no estilo que você forneceu anteriormente.
+Estilização básica para centralizar o conteúdo.
 JavaScript:
 
-Usa jQuery para capturar o clique no botão.
-Verifica se um arquivo válido foi selecionado.
-Usa FormData para criar uma solicitação de upload de arquivo.
-Faz uma requisição AJAX para enviar o arquivo para o
+Usa jQuery para ca
