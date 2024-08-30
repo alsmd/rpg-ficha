@@ -1,0 +1,22 @@
+Firewall1# show failover
+
+Failover On
+Failover unit Primary
+Failover LAN Interface: failover GigabitEthernet0/2 (up)
+Unit Poll frequency 1 seconds, holdtime 15 seconds
+Interface Poll frequency 5 seconds, holdtime 25 seconds
+Interface Policy 15
+Monitored Interfaces 2 of 2 maximum
+
+This host: Primary - Active
+  Active time: 1397165 (sec)
+  Interface Outside (10.0.0.1): Normal (Monitored)
+  Interface Inside (192.168.0.1): Normal (Monitored)
+
+Other host: Secondary - Standby Ready
+  Active time: 1125 (sec)
+  Interface Outside (10.0.0.2): Normal (Monitored)
+  Interface Inside (192.168.0.2): Normal (Monitored)
+
+Last Failover at: 08:12:09 UTC Jan 1 2024
+  Failover occurred due to power failure
