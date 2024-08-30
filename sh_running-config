@@ -1,0 +1,31 @@
+Firewall1# show running-config
+
+: Saved
+: 
+ASA Version 9.8(2)
+!
+hostname Firewall1
+!
+interface GigabitEthernet0/0
+ nameif Outside
+ security-level 0
+ ip address 10.0.0.1 255.255.255.0
+!
+interface GigabitEthernet0/1
+ nameif Inside
+ security-level 100
+ ip address 192.168.0.1 255.255.255.0
+!
+object network INTERNAL_NET
+ subnet 192.168.0.0 255.255.255.0
+object network EXTERNAL_NET
+ subnet 10.0.0.0 255.255.255.0
+!
+access-list OUTSIDE_IN extended permit tcp any host 192.168.0.100 eq 80
+access-list OUTSIDE_IN extended deny ip any any
+access-list INSIDE_OUT extended permit ip 192.168.0.0 255.255.255.0 any
+!
+access-group OUTSIDE_IN in interface Outside
+access-group INSIDE_OUT in interface Inside
+!
+nat (Inside,Outside) source dynamic INTERNAL_NET interface
