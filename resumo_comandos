@@ -1,0 +1,7 @@
+show failover: Exibe o status do failover, incluindo informações sobre qual unidade está ativa e qual está em standby, junto com detalhes das interfaces monitoradas.
+
+show running-config: Mostra toda a configuração atual do firewall, incluindo interfaces, objetos de rede, listas de acesso, e NAT.
+
+show run access-group: Exibe as associações de listas de acesso com interfaces específicas, mostrando onde e como as regras são aplicadas.
+
+show access-list | e (access-list): Filtra e exibe as regras de acesso, focando nos hits (contagens de acertos) para cada regra, o que pode ser útil para análise de tráfego.
