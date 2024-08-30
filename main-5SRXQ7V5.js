@@ -1,4 +1,7 @@
-Aqui está um exemplo de como uma resposta JSON para o endpoint /application_objects?location=shared pode ser estruturada:
+Quando você faz uma solicitação ao endpoint /?type=op&cmd=<show><devices><all></all></devices></show>&output=json em um dispositivo Palo Alto, o retorno geralmente inclui informações sobre todos os dispositivos gerenciados ou conectados, como firewalls individuais ou dispositivos Panorama que estão sob a administração central.
+
+Exemplo de Resposta
+Aqui está um exemplo de como uma resposta JSON para esse endpoint pode ser estruturada:
 
 json
 Copiar código
@@ -6,63 +9,78 @@ Copiar código
   "response": {
     "status": "success",
     "result": {
-      "entry": [
-        {
-          "@name": "facebook",
-          "category": "social-networking",
-          "subcategory": "social-networking",
-          "technology": "browser-based",
-          "risk": "high",
-          "description": "Facebook application for social networking"
-        },
-        {
-          "@name": "youtube",
-          "category": "streaming-media",
-          "subcategory": "video-streaming",
-          "technology": "browser-based",
-          "risk": "high",
-          "description": "YouTube video streaming application"
-        },
-        {
-          "@name": "ssh",
-          "category": "networking",
-          "subcategory": "remote-access",
-          "technology": "network-protocol",
-          "risk": "medium",
-          "description": "SSH protocol for secure remote access"
-        },
-        {
-          "@name": "dns",
-          "category": "networking",
-          "subcategory": "infrastructure",
-          "technology": "network-protocol",
-          "risk": "low",
-          "description": "DNS protocol for domain name resolution"
-        },
-        {
-          "@name": "custom-app",
-          "category": "custom",
-          "subcategory": "custom-subcategory",
-          "technology": "custom-technology",
-          "risk": "unknown",
-          "description": "Custom application object for specific needs"
-        }
-      ]
+      "devices": {
+        "entry": [
+          {
+            "serial": "001122334455",
+            "connected": "yes",
+            "uptime": "200 days, 5:12:32",
+            "family": "PA-3200",
+            "model": "PA-3220",
+            "sw-version": "10.1.0",
+            "app-version": "850-5172",
+            "av-version": "3344-6456",
+            "threat-version": "850-5172",
+            "wf-private": "n/a",
+            "url-filtering-version": "2024.08.30.110",
+            "logdb-version": "10.1.0",
+            "multi-vsys": "off",
+            "state": "active",
+            "management-ip": "192.168.1.1",
+            "hostname": "firewall-1"
+          },
+          {
+            "serial": "667788990011",
+            "connected": "yes",
+            "uptime": "150 days, 3:45:12",
+            "family": "PA-850",
+            "model": "PA-852",
+            "sw-version": "10.0.5",
+            "app-version": "845-5001",
+            "av-version": "3301-6124",
+            "threat-version": "845-5001",
+            "wf-private": "n/a",
+            "url-filtering-version": "2024.08.30.110",
+            "logdb-version": "10.0.5",
+            "multi-vsys": "on",
+            "state": "passive",
+            "management-ip": "192.168.2.1",
+            "hostname": "firewall-2"
+          }
+        ]
+      }
     }
   }
 }
 Explicação dos Campos
-@name: O nome do objeto de aplicação. Este nome é usado em regras de segurança para identificar o tipo de aplicação que está sendo gerenciada ou monitorada.
+serial: O número de série do dispositivo. Este é um identificador único para cada dispositivo Palo Alto.
 
-category: A categoria geral da aplicação, como social-networking, streaming-media, ou networking. Isso ajuda a agrupar aplicações semelhantes.
+connected: Indica se o dispositivo está atualmente conectado ao sistema de gerenciamento (yes ou no).
 
-subcategory: Uma subcategoria mais específica dentro da categoria, que fornece mais detalhes sobre a aplicação. Por exemplo, video-streaming dentro de streaming-media.
+uptime: O tempo de atividade do dispositivo desde a última reinicialização.
 
-technology: A tecnologia associada à aplicação, como browser-based para aplicações que funcionam em navegadores, ou network-protocol para protocolos de rede.
+family: A família do dispositivo, como PA-3200 ou PA-850, que indica a série ou modelo a que o dispositivo pertence.
 
-risk: O nível de risco associado à aplicação, como high, medium, low, ou unknown. Isso ajuda a determinar a criticidade da aplicação em termos de segurança.
+model: O modelo específico do dispositivo, como PA-3220 ou PA-852.
 
-description: Uma descrição opcional que fornece mais contexto sobre a aplicação e sua finalidade.
+sw-version: A versão do software PAN-OS que está rodando no dispositivo.
 
-Detalhes Adicionais
-location=shared: Indica que os objetos de aplicação retornados são compartilhados entre todos os device groups ou contextos de configuração no sistema. Esses objetos podem ser usados em qualquer parte da configuração que tenha acesso ao contexto shared.
+app-version: A versão da base de dados de aplicações instalada no dispositivo.
+
+av-version: A versão da base de dados de antivírus instalada.
+
+threat-version: A versão da base de dados de ameaças instalada.
+
+wf-private: Normalmente relacionado à versão do filtro de conteúdo, mas pode ser n/a (não aplicável) se não estiver em uso.
+
+url-filtering-version: A versão da base de dados de filtragem de URLs.
+
+logdb-version: A versão do banco de dados de logs do dispositivo.
+
+multi-vsys: Indica se o dispositivo está configurado para usar múltiplos sistemas virtuais (on ou off).
+
+state: O estado atual do dispositivo, como active (ativo) ou passive (passivo).
+
+management-ip: O endereço IP de gerenciamento do dispositivo.
+
+hostname: O nome do host do dispositivo, que é o identificador atribuído ao dispositivo dentro da rede.
