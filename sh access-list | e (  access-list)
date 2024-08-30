@@ -1,0 +1,6 @@
+Firewall1# show access-list | e (access-list)
+
+10 permit tcp any host 192.168.0.100 eq 80 (hitcnt=234)
+20 deny ip any any (hitcnt=132)
+30 permit ip 192.168.0.0 255.255.255.0 any (hitcnt=567)
+40 permit icmp any any (hitcnt=45)
