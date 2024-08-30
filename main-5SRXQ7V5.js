@@ -1,4 +1,4 @@
-Aqui está um exemplo de como uma resposta JSON para o endpoint /Objects/Services?location=shared pode ser estruturada:
+Aqui está um exemplo de como uma resposta JSON para o endpoint /application_objects?location=shared pode ser estruturada:
 
 json
 Copiar código
@@ -8,47 +8,61 @@ Copiar código
     "result": {
       "entry": [
         {
-          "@name": "HTTP",
-          "protocol": "tcp",
-          "port": "80",
-          "description": "HTTP traffic"
+          "@name": "facebook",
+          "category": "social-networking",
+          "subcategory": "social-networking",
+          "technology": "browser-based",
+          "risk": "high",
+          "description": "Facebook application for social networking"
         },
         {
-          "@name": "HTTPS",
-          "protocol": "tcp",
-          "port": "443",
-          "description": "HTTPS traffic"
+          "@name": "youtube",
+          "category": "streaming-media",
+          "subcategory": "video-streaming",
+          "technology": "browser-based",
+          "risk": "high",
+          "description": "YouTube video streaming application"
         },
         {
-          "@name": "SSH",
-          "protocol": "tcp",
-          "port": "22",
-          "description": "SSH traffic"
+          "@name": "ssh",
+          "category": "networking",
+          "subcategory": "remote-access",
+          "technology": "network-protocol",
+          "risk": "medium",
+          "description": "SSH protocol for secure remote access"
         },
         {
-          "@name": "DNS",
-          "protocol": "udp",
-          "port": "53",
-          "description": "DNS queries"
+          "@name": "dns",
+          "category": "networking",
+          "subcategory": "infrastructure",
+          "technology": "network-protocol",
+          "risk": "low",
+          "description": "DNS protocol for domain name resolution"
         },
         {
-          "@name": "Custom-Protocol",
-          "protocol": "tcp",
-          "port": "12345",
-          "description": "Custom TCP service for specific application"
+          "@name": "custom-app",
+          "category": "custom",
+          "subcategory": "custom-subcategory",
+          "technology": "custom-technology",
+          "risk": "unknown",
+          "description": "Custom application object for specific needs"
         }
       ]
     }
   }
 }
 Explicação dos Campos
-@name: O nome do objeto de serviço, que identifica o serviço dentro do firewall. Este nome é usado em regras de segurança para referenciar o serviço.
+@name: O nome do objeto de aplicação. Este nome é usado em regras de segurança para identificar o tipo de aplicação que está sendo gerenciada ou monitorada.
 
-protocol: O protocolo associado ao serviço, como tcp, udp, ou sctp. Isso especifica o tipo de tráfego que o serviço representa.
+category: A categoria geral da aplicação, como social-networking, streaming-media, ou networking. Isso ajuda a agrupar aplicações semelhantes.
 
-port: A porta ou intervalo de portas que o serviço utiliza. Por exemplo, 80 para HTTP, 443 para HTTPS, e 22 para SSH.
+subcategory: Uma subcategoria mais específica dentro da categoria, que fornece mais detalhes sobre a aplicação. Por exemplo, video-streaming dentro de streaming-media.
 
-description: Uma descrição opcional do serviço, fornecendo mais contexto sobre o que o serviço faz ou para que é usado.
+technology: A tecnologia associada à aplicação, como browser-based para aplicações que funcionam em navegadores, ou network-protocol para protocolos de rede.
+
+risk: O nível de risco associado à aplicação, como high, medium, low, ou unknown. Isso ajuda a determinar a criticidade da aplicação em termos de segurança.
+
+description: Uma descrição opcional que fornece mais contexto sobre a aplicação e sua finalidade.
 
 Detalhes Adicionais
-location=shared: Indica que os serviços retornados são compartilhados entre todos os device groups ou contextos de configuração no sistema. Isso significa que esses objetos estão disponíveis para uso em todo o ambiente configurado.
+location=shared: Indica que os objetos de aplicação retornados são compartilhados entre todos os device groups ou contextos de configuração no sistema. Esses objetos podem ser usados em qualquer parte da configuração que tenha acesso ao contexto shared.
