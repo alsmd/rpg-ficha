@@ -1,0 +1,4 @@
+Firewall1# show run access-group
+
+access-group OUTSIDE_IN in interface Outside
+access-group INSIDE_OUT in interface Inside
