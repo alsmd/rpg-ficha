@@ -1,6 +1,4 @@
-O endpoint /Objects/Addresses?location=shared do Palo Alto é utilizado para recuperar uma lista de endereços IP ou ranges de endereços configurados como objetos de endereço no contexto "shared" do firewall. Esses objetos de endereço são frequentemente usados em regras de segurança, NAT, e outras políticas.
-
-Aqui está um exemplo de uma possível resposta JSON para uma solicitação GET a esse endpoint:
+Aqui está um exemplo de como uma resposta JSON para o endpoint /Objects/Services?location=shared pode ser estruturada:
 
 json
 Copiar código
@@ -10,52 +8,47 @@ Copiar código
     "result": {
       "entry": [
         {
-          "@name": "Web-Server-1",
-          "ip-netmask": "192.168.1.10/32",
-          "description": "Primary web server",
-          "tag": {
-            "member": "Critical-Servers"
-          },
-          "vsys": "vsys1",
-          "location": "shared"
+          "@name": "HTTP",
+          "protocol": "tcp",
+          "port": "80",
+          "description": "HTTP traffic"
         },
         {
-          "@name": "Database-Cluster",
-          "ip-range": "192.168.2.100-192.168.2.110",
-          "description": "Database cluster IP range",
-          "tag": {
-            "member": "Database-Servers"
-          },
-          "vsys": "vsys1",
-          "location": "shared"
+          "@name": "HTTPS",
+          "protocol": "tcp",
+          "port": "443",
+          "description": "HTTPS traffic"
         },
         {
-          "@name": "Office-Network",
-          "ip-netmask": "10.0.0.0/24",
-          "description": "Corporate office network",
-          "tag": {
-            "member": "Internal-Networks"
-          },
-          "vsys": "vsys1",
-          "location": "shared"
+          "@name": "SSH",
+          "protocol": "tcp",
+          "port": "22",
+          "description": "SSH traffic"
+        },
+        {
+          "@name": "DNS",
+          "protocol": "udp",
+          "port": "53",
+          "description": "DNS queries"
+        },
+        {
+          "@name": "Custom-Protocol",
+          "protocol": "tcp",
+          "port": "12345",
+          "description": "Custom TCP service for specific application"
         }
       ]
     }
   }
 }
-Detalhes da Resposta:
-entry: Cada entrada representa um objeto de endereço configurado.
-@name: Nome do objeto de endereço.
-ip-netmask: Endereço IP ou bloco de endereços definido pelo objeto, usando notação CIDR (ex: 192.168.1.10/32 para um único IP).
-ip-range: Intervalo de endereços IP se o objeto for configurado como um range (ex: 192.168.2.100-192.168.2.110).
-description: Descrição opcional do objeto de endereço para ajudar na identificação do seu propósito.
-tag: Tags associadas ao objeto, usadas para organização e categorização.
-member: Nome do tag associado ao objeto.
-vsys: Identifica o sistema virtual (vsys) ao qual o objeto pertence, se aplicável.
-location: Indica que o objeto está na localização "shared", tornando-o disponível para uso em todos os sistemas virtuais do dispositivo.
-Este exemplo inclui três objetos de endereço:
+Explicação dos Campos
+@name: O nome do objeto de serviço, que identifica o serviço dentro do firewall. Este nome é usado em regras de segurança para referenciar o serviço.
 
-Web-Server-1: Um IP único para um servidor web.
-Database-Cluster: Um intervalo de IPs para um cluster de banco de dados.
-Office-Network: Um bloco de rede que cobre um escritório corporativo.
-Esses objetos de endereço podem ser referenciados em políticas e regras no firewall para controlar e monitorar o tráfego relacionado a essas entidades.
+protocol: O protocolo associado ao serviço, como tcp, udp, ou sctp. Isso especifica o tipo de tráfego que o serviço representa.
+
+port: A porta ou intervalo de portas que o serviço utiliza. Por exemplo, 80 para HTTP, 443 para HTTPS, e 22 para SSH.
+
+description: Uma descrição opcional do serviço, fornecendo mais contexto sobre o que o serviço faz ou para que é usado.
+
+Detalhes Adicionais
+location=shared: Indica que os serviços retornados são compartilhados entre todos os device groups ou contextos de configuração no sistema. Isso significa que esses objetos estão disponíveis para uso em todo o ambiente configurado.
