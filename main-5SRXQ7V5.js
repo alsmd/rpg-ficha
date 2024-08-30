@@ -1,57 +1,50 @@
-import pydot
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.sql import text
+Glossário de Termos de Firewall e Regras
+Regras (Rules):
 
-# Função para ler o arquivo .SQL e executar os comandos SQL
-def parse_sql_file(sql_file):
-    with open(sql_file, 'r') as file:
-        sql_commands = file.read()
+Definição: Instruções específicas que definem se o tráfego de rede deve ser permitido ou bloqueado em um firewall.
+Relacionamento: Regras são configuradas dentro de uma lista de acesso (access-list) e geralmente incluem informações como IPs de origem e destino, portas, e protocolos.
+Grupos de Regras (Rule Groups):
 
-    return sql_commands
+Definição: Conjunto de regras organizadas sob um único identificador, usado para aplicar políticas comuns a múltiplas regras ou simplificar a administração.
+Relacionamento: Grupos de regras podem ser usados em class-maps ou policy-maps para definir políticas de firewall mais complexas.
+Grupos de IPs (IP Groups):
 
-# Função para criar e salvar o diagrama
-def create_erd_from_sql(sql_file, output_file):
-    # Criar engine SQLite em memória
-    engine = create_engine('sqlite:///:memory:')
-    
-    # Criar um objeto MetaData
-    metadata = MetaData()
-    
-    # Ler o arquivo SQL
-    sql_commands = parse_sql_file(sql_file)
-    
-    # Executar os comandos SQL para criar as tabelas
-    with engine.connect() as connection:
-        connection.execute(text(sql_commands))
-        metadata.reflect(bind=connection)
+Definição: Coleção de endereços IP ou sub-redes agrupadas sob um nome comum para simplificar a criação de regras de firewall.
+Relacionamento: Usado dentro de regras para referenciar múltiplos IPs ou sub-redes, ao invés de especificar cada IP individualmente.
+IPs (Internet Protocol Addresses):
 
-    # Criar o gráfico
-    graph = pydot.Dot(graph_type='digraph')
+Definição: Identificadores únicos atribuídos a dispositivos na rede, usados para enviar e receber dados.
+Relacionamento: Usados em regras de firewall para definir a origem e o destino do tráfego de rede.
+Grupos de Serviço (Service Groups):
 
-    # Adicionar tabelas e colunas ao gráfico
-    for table_name, table in metadata.tables.items():
-        node = pydot.Node(
-            table_name, 
-            shape='record', 
-            label='{{{}|{}}}'.format(
-                table_name, 
-                '|'.join([f"{col.name} : {col.type}" for col in table.columns])
-            )
-        )
-        graph.add_node(node)
+Definição: Conjunto de portas de serviços ou protocolos agrupados sob um nome comum.
+Relacionamento: Facilita a configuração de regras de firewall que aplicam as mesmas ações a múltiplas portas ou protocolos.
+Portas (Ports):
 
-    # Adicionar chaves estrangeiras ao gráfico
-    for table_name, table in metadata.tables.items():
-        for fk in table.foreign_keys:
-            edge = pydot.Edge(fk.column.table.name, table_name)
-            graph.add_edge(edge)
+Definição: Números usados para identificar tipos específicos de tráfego de rede, como HTTP (porta 80) ou HTTPS (porta 443).
+Relacionamento: Especificados nas regras de firewall para definir quais tipos de tráfego são permitidos ou bloqueados.
+Protocolo (Protocol):
 
-    # Salvar o gráfico como um arquivo .svg
-    graph.write_svg(output_file)
+Definição: Conjunto de regras que define como os dados são transmitidos na rede (ex.: TCP, UDP, ICMP).
+Relacionamento: Incluído nas regras de firewall para determinar como o tráfego é tratado.
+Protocolo_Grupo (Protocol Group):
 
-# Caminho do arquivo .SQL e o arquivo de saída .svg
-sql_file = 'caminho/para/seu_arquivo.sql'
-output_file = 'output.svg'
+Definição: Coleção de protocolos agrupados para facilitar a criação de regras de firewall.
+Relacionamento: Usado para aplicar a mesma regra a múltiplos protocolos ao mesmo tempo.
+Keyword (Palavra-chave):
 
-# Executa a função para gerar o diagrama
-create_erd_from_sql(sql_file, output_file)
+Definição: Termos específicos usados em regras para detalhar condições adicionais, como eq (igual a), range (intervalo), ou log (registrar).
+Relacionamento: Adiciona funcionalidade ou especificidade extra às regras de firewall.
+Hitcnt (Contador de Hits):
+
+Definição: Contador que mostra o número de vezes que uma regra foi acionada.
+Relacionamento: Usado para monitorar a eficácia e o uso de uma regra específica em uma lista de acesso.
+Remark (Comentário):
+Definição: Texto explicativo ou comentário associado a uma regra de firewall para descrever sua função.
+Relacionamento: Adicionado antes ou dentro de uma regra para documentação e clareza.
+Grupo (Group):
+Definição: Termo geral que pode se referir a qualquer agrupamento de elementos como IPs, portas, ou regras.
+Relacionamento: Usado para organizar elementos relacionados em uma configuração de firewall para facilitar o gerenciamento.
+Nome (Name):
+Definição: Identificador dado a um objeto ou grupo de objetos dentro da configuração do firewall.
+Relacionamento: Usado para referenciar grupos de IPs, serviços, protocolos, ou outras entidades nas regras de firewall.
