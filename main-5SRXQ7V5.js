@@ -1,4 +1,4 @@
-O endpoint /Objects/Tags da API do Palo Alto Panorama retorna informações sobre as tags configuradas no sistema. Tags são usadas para organizar e categorizar objetos dentro do firewall, como endereços IP, serviços e aplicações, facilitando a aplicação de políticas e a gestão de recursos.
+O endpoint /Policies/SecurityPreRules na API do Palo Alto Panorama retorna as regras de segurança pré-configuradas (ou "Pre-Rules") em um dispositivo ou grupo de dispositivos gerenciados. As Pre-Rules são políticas de segurança que são aplicadas antes das regras locais específicas de um dispositivo.
 
 Aqui está um exemplo de como uma possível resposta desse endpoint poderia ser:
 
@@ -8,51 +8,128 @@ Copy code
   "response": {
     "status": "success",
     "result": {
-      "entry": [
-        {
-          "@name": "web-servers",
-          "color": "blue",
-          "description": "Tag for web servers"
-        },
-        {
-          "@name": "database-servers",
-          "color": "green",
-          "description": "Tag for database servers"
-        },
-        {
-          "@name": "internal",
-          "color": "yellow",
-          "description": "Tag for internal network resources"
-        },
-        {
-          "@name": "external",
-          "color": "red",
-          "description": "Tag for external resources"
-        }
-      ]
+      "rules": {
+        "entry": [
+          {
+            "@name": "Allow-Web-Traffic",
+            "from": {
+              "member": ["trust"]
+            },
+            "to": {
+              "member": ["untrust"]
+            },
+            "source": {
+              "member": ["any"]
+            },
+            "destination": {
+              "member": ["any"]
+            },
+            "source-user": {
+              "member": ["any"]
+            },
+            "category": {
+              "member": ["any"]
+            },
+            "application": {
+              "member": ["web-browsing", "ssl"]
+            },
+            "service": {
+              "member": ["application-default"]
+            },
+            "hip-profiles": {
+              "member": ["any"]
+            },
+            "action": "allow",
+            "log-setting": "Log-Forwarding-Profile",
+            "log-start": "yes",
+            "log-end": "yes",
+            "description": "Allow all web traffic to external networks",
+            "tag": {
+              "member": ["web-traffic"]
+            },
+            "group": "Security Group 1"
+          },
+          {
+            "@name": "Deny-Unauthorized-Access",
+            "from": {
+              "member": ["untrust"]
+            },
+            "to": {
+              "member": ["trust"]
+            },
+            "source": {
+              "member": ["any"]
+            },
+            "destination": {
+              "member": ["any"]
+            },
+            "source-user": {
+              "member": ["any"]
+            },
+            "category": {
+              "member": ["any"]
+            },
+            "application": {
+              "member": ["any"]
+            },
+            "service": {
+              "member": ["any"]
+            },
+            "hip-profiles": {
+              "member": ["any"]
+            },
+            "action": "deny",
+            "log-setting": "Log-Forwarding-Profile",
+            "log-start": "yes",
+            "log-end": "yes",
+            "description": "Deny all unauthorized access to internal networks",
+            "tag": {
+              "member": ["security"]
+            },
+            "group": "Security Group 2"
+          }
+        ]
+      }
     }
   }
 }
 Explicação dos Campos
-@name: Nome da tag, que serve como identificador único da tag.
+@name: Nome da regra de segurança. Este é o identificador da regra.
 
-color: Cor associada à tag. Isso é mais para fins de organização visual e pode ajudar na identificação rápida das tags em interfaces gráficas.
+from: Define a zona de origem (por exemplo, trust, untrust). Indica de onde o tráfego está vindo.
 
-description: Descrição opcional que fornece detalhes sobre a finalidade ou o uso da tag.
+to: Define a zona de destino. Indica para onde o tráfego está indo.
 
-Tipos de Tags
-Tags para Recursos de Servidor (web-servers, database-servers): Tags usadas para identificar e categorizar diferentes tipos de servidores dentro da rede.
+source: Especifica os endereços IP de origem para os quais a regra se aplica. any significa qualquer IP de origem.
 
-Tags para Categorias de Rede (internal, external): Tags usadas para diferenciar recursos internos e externos, ajudando a aplicar políticas de segurança e controles de acesso com base na localização dos recursos.
+destination: Especifica os endereços IP de destino para os quais a regra se aplica. any significa qualquer IP de destino.
 
-Uso Prático
-As tags são utilizadas para facilitar a organização e a aplicação de políticas em diferentes objetos dentro do sistema de firewall. Elas permitem a categorização de recursos de forma mais granular e ajudam a aplicar regras e políticas com base em categorias definidas.
+source-user: Define os usuários de origem. any significa qualquer usuário.
 
-Exemplos de Aplicação
-Tag web-servers: Pode ser aplicada a todos os endereços IP ou serviços associados a servidores web. Isso facilita a criação de políticas específicas para proteger esses servidores.
+category: Define as categorias de URL, se aplicável. any significa qualquer categoria.
 
-Tag database-servers: Pode ser usada para marcar servidores de banco de dados, permitindo a aplicação de regras de segurança específicas para proteger esses recursos críticos.
+application: Especifica as aplicações que esta regra cobre (por exemplo, web-browsing, ssl).
 
-Tag internal e external: Podem ser usadas para distinguir entre recursos internos e externos, permitindo a criação de políticas que se aplicam de forma diferente dependendo da localização dos recursos na rede.
+service: Define os serviços que a regra cobre. application-default refere-se aos serviços padrão das aplicações especificadas.
 
-Esses exemplos mostram como as tags ajudam a organizar e gerenciar recursos de forma eficiente, facilitando a aplicação de políticas de segurança e a manutenção do ambiente de rede.
+hip-profiles: Define os perfis HIP (Host Information Profile) aplicáveis. any significa qualquer perfil HIP.
+
+action: A ação da regra, como allow (permitir) ou deny (negar).
+
+log-setting: Nome do perfil de log associado à regra.
+
+log-start e log-end: Indicadores de que o início e/ou o fim da sessão deve ser registrado nos logs.
+
+description: Uma descrição da regra para ajudar na identificação do propósito da regra.
+
+tag: Tags associadas à regra, para facilitar a categorização e gestão.
+
+group: Nome do grupo de segurança ao qual a regra pertence.
+
+Exemplos de Uso
+Allow-Web-Traffic: Esta regra permite o tráfego da zona trust (geralmente a rede interna) para a zona untrust (geralmente a internet) para as aplicações de navegação na web (web-browsing, ssl). O tráfego é permitido e o início e fim das sessões são registrados nos logs.
+
+Deny-Unauthorized-Access: Esta regra nega todo o tráfego de entrada da zona untrust para a zona trust, prevenindo acessos não autorizados. Também registra o início e fim das tentativas de acesso.
+
+Aplicação Prática
+As Pre-Rules são especialmente úteis em ambientes onde múltiplos dispositivos compartilham uma configuração centralizada. Ao configurar regras como essas no Panorama, você assegura que todos os dispositivos dentro de um grupo seguem as mesmas políticas de segurança, simplificando a gestão e aumentando a consistência das regras aplicadas em toda a infraestrutura de segurança.
