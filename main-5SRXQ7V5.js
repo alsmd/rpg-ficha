@@ -1,6 +1,6 @@
-O endpoint /Objects/addressGroups na API do Palo Alto Panorama retorna informações sobre grupos de endereços configurados. Esses grupos de endereços são coleções de objetos de endereço que podem ser usados para simplificar a aplicação de regras de firewall.
+O endpoint /Objects/ServiceGroups da API do Palo Alto Panorama retorna informações sobre grupos de serviços configurados no sistema. Esses grupos de serviços são coleções de definições de serviços, como combinações de protocolos e portas, que facilitam a aplicação de regras de firewall.
 
-Aqui está um exemplo de como um possível retorno desse endpoint poderia ser:
+Aqui está um exemplo de como uma possível resposta desse endpoint poderia ser:
 
 json
 Copy code
@@ -10,48 +10,44 @@ Copy code
     "result": {
       "entry": [
         {
-          "@name": "datacenter-address-group",
-          "description": "Group of all datacenter subnets",
-          "static": {
-            "member": [
-              "datacenter-subnet-01",
-              "datacenter-subnet-02",
-              "datacenter-subnet-03"
-            ]
-          },
-          "tag": {
-            "member": [
-              "production",
-              "critical"
-            ]
-          }
-        },
-        {
-          "@name": "web-servers-group",
-          "description": "Group of all web servers",
-          "dynamic": {
-            "filter": "'tag eq web' and 'tag eq production'"
-          },
+          "@name": "web-services-group",
+          "description": "Group for web-related services",
+          "member": [
+            "service-HTTP",
+            "service-HTTPS"
+          ],
           "tag": {
             "member": [
               "web",
-              "production"
+              "internet"
             ]
           }
         },
         {
-          "@name": "branch-office-group",
-          "description": "Group of branch office networks",
-          "static": {
-            "member": [
-              "branch-office-subnet-01",
-              "branch-office-subnet-02"
-            ]
-          },
+          "@name": "dns-services-group",
+          "description": "Group for DNS-related services",
+          "member": [
+            "service-DNS",
+            "service-DNS-over-TCP"
+          ],
           "tag": {
             "member": [
-              "branch",
-              "office"
+              "dns",
+              "internal"
+            ]
+          }
+        },
+        {
+          "@name": "database-services-group",
+          "description": "Group for database services",
+          "member": [
+            "service-MYSQL",
+            "service-POSTGRESQL"
+          ],
+          "tag": {
+            "member": [
+              "database",
+              "backend"
             ]
           }
         }
@@ -60,20 +56,22 @@ Copy code
   }
 }
 Explicação dos Campos
-@name: Nome do grupo de endereços, que serve como identificador único.
+@name: Nome do grupo de serviços, que serve como identificador único do grupo.
 
-description: Descrição opcional que explica o propósito ou o conteúdo do grupo.
+description: Descrição opcional que explica o propósito ou o conteúdo do grupo de serviços.
 
-static: Contém uma lista de membros (member) que pertencem ao grupo. Esses membros são outros objetos de endereço (como sub-redes ou IPs) que foram explicitamente incluídos no grupo.
+member: Lista de nomes de serviços que fazem parte do grupo. Cada item nesta lista corresponde a um serviço individual configurado no sistema, como um serviço HTTP ou DNS.
 
-dynamic: Especifica um grupo dinâmico de endereços, onde os membros são selecionados com base em um filtro específico, como tags associadas aos endereços. No exemplo, o filtro seleciona endereços que têm as tags web e production.
+tag: Lista de tags associadas ao grupo de serviços. As tags ajudam na organização e categorização dos grupos, facilitando a gestão e busca.
 
-tag: Lista de tags associadas ao grupo de endereços. As tags ajudam na organização e categorização dos grupos de endereços.
-
-Tipos de Grupos de Endereços
-Grupos Estáticos (static): Esses grupos contêm uma lista fixa de endereços ou sub-redes que são manualmente configurados.
-
-Grupos Dinâmicos (dynamic): Esses grupos são baseados em critérios que selecionam automaticamente os membros com base em atributos ou tags associadas.
-
+Tipos de Grupos de Serviços
+Grupos de Serviços Estáticos: São definidos explicitamente com uma lista de serviços que foram configurados anteriormente.
 Uso Prático
-Grupos de endereços são frequentemente usados em políticas de segurança para simplificar e organizar as regras de firewall. Por exemplo, ao invés de aplicar uma política a vários endereços individuais, você pode aplicar a um grupo de endereços, o que facilita a manutenção e reduz o risco de erro na configuração.
+Grupos de serviços são utilizados para simplificar a aplicação de políticas de segurança. Por exemplo, em vez de definir uma regra de firewall para cada serviço individualmente, você pode criar uma regra que se aplique a todo o grupo de serviços, reduzindo a complexidade da configuração e facilitando a manutenção das políticas.
+
+Exemplos de Aplicação
+Grupo de Serviços Web (web-services-group): Inclui serviços comuns para servidores web, como HTTP e HTTPS, que podem ser usados em uma única regra de firewall para controlar o acesso aos servidores web.
+
+Grupo de Serviços DNS (dns-services-group): Inclui tanto DNS tradicional quanto DNS sobre TCP, agrupando todos os serviços relacionados ao DNS para facilitar a aplicação de políticas.
+
+Grupo de Serviços de Banco de Dados (database-services-group): Agrupa serviços de banco de dados como MySQL e PostgreSQL, permitindo que políticas de segurança sejam aplicadas de maneira uniforme a todos os bancos de dados
