@@ -1,86 +1,79 @@
-Quando você faz uma solicitação ao endpoint /?type=op&cmd=<show><devices><all></all></devices></show>&output=json em um dispositivo Palo Alto, o retorno geralmente inclui informações sobre todos os dispositivos gerenciados ou conectados, como firewalls individuais ou dispositivos Panorama que estão sob a administração central.
+O endpoint /Objects/addressGroups na API do Palo Alto Panorama retorna informações sobre grupos de endereços configurados. Esses grupos de endereços são coleções de objetos de endereço que podem ser usados para simplificar a aplicação de regras de firewall.
 
-Exemplo de Resposta
-Aqui está um exemplo de como uma resposta JSON para esse endpoint pode ser estruturada:
+Aqui está um exemplo de como um possível retorno desse endpoint poderia ser:
 
 json
-Copiar código
+Copy code
 {
   "response": {
     "status": "success",
     "result": {
-      "devices": {
-        "entry": [
-          {
-            "serial": "001122334455",
-            "connected": "yes",
-            "uptime": "200 days, 5:12:32",
-            "family": "PA-3200",
-            "model": "PA-3220",
-            "sw-version": "10.1.0",
-            "app-version": "850-5172",
-            "av-version": "3344-6456",
-            "threat-version": "850-5172",
-            "wf-private": "n/a",
-            "url-filtering-version": "2024.08.30.110",
-            "logdb-version": "10.1.0",
-            "multi-vsys": "off",
-            "state": "active",
-            "management-ip": "192.168.1.1",
-            "hostname": "firewall-1"
+      "entry": [
+        {
+          "@name": "datacenter-address-group",
+          "description": "Group of all datacenter subnets",
+          "static": {
+            "member": [
+              "datacenter-subnet-01",
+              "datacenter-subnet-02",
+              "datacenter-subnet-03"
+            ]
           },
-          {
-            "serial": "667788990011",
-            "connected": "yes",
-            "uptime": "150 days, 3:45:12",
-            "family": "PA-850",
-            "model": "PA-852",
-            "sw-version": "10.0.5",
-            "app-version": "845-5001",
-            "av-version": "3301-6124",
-            "threat-version": "845-5001",
-            "wf-private": "n/a",
-            "url-filtering-version": "2024.08.30.110",
-            "logdb-version": "10.0.5",
-            "multi-vsys": "on",
-            "state": "passive",
-            "management-ip": "192.168.2.1",
-            "hostname": "firewall-2"
+          "tag": {
+            "member": [
+              "production",
+              "critical"
+            ]
           }
-        ]
-      }
+        },
+        {
+          "@name": "web-servers-group",
+          "description": "Group of all web servers",
+          "dynamic": {
+            "filter": "'tag eq web' and 'tag eq production'"
+          },
+          "tag": {
+            "member": [
+              "web",
+              "production"
+            ]
+          }
+        },
+        {
+          "@name": "branch-office-group",
+          "description": "Group of branch office networks",
+          "static": {
+            "member": [
+              "branch-office-subnet-01",
+              "branch-office-subnet-02"
+            ]
+          },
+          "tag": {
+            "member": [
+              "branch",
+              "office"
+            ]
+          }
+        }
+      ]
     }
   }
 }
 Explicação dos Campos
-serial: O número de série do dispositivo. Este é um identificador único para cada dispositivo Palo Alto.
+@name: Nome do grupo de endereços, que serve como identificador único.
 
-connected: Indica se o dispositivo está atualmente conectado ao sistema de gerenciamento (yes ou no).
+description: Descrição opcional que explica o propósito ou o conteúdo do grupo.
 
-uptime: O tempo de atividade do dispositivo desde a última reinicialização.
+static: Contém uma lista de membros (member) que pertencem ao grupo. Esses membros são outros objetos de endereço (como sub-redes ou IPs) que foram explicitamente incluídos no grupo.
 
-family: A família do dispositivo, como PA-3200 ou PA-850, que indica a série ou modelo a que o dispositivo pertence.
+dynamic: Especifica um grupo dinâmico de endereços, onde os membros são selecionados com base em um filtro específico, como tags associadas aos endereços. No exemplo, o filtro seleciona endereços que têm as tags web e production.
 
-model: O modelo específico do dispositivo, como PA-3220 ou PA-852.
+tag: Lista de tags associadas ao grupo de endereços. As tags ajudam na organização e categorização dos grupos de endereços.
 
-sw-version: A versão do software PAN-OS que está rodando no dispositivo.
+Tipos de Grupos de Endereços
+Grupos Estáticos (static): Esses grupos contêm uma lista fixa de endereços ou sub-redes que são manualmente configurados.
 
-app-version: A versão da base de dados de aplicações instalada no dispositivo.
+Grupos Dinâmicos (dynamic): Esses grupos são baseados em critérios que selecionam automaticamente os membros com base em atributos ou tags associadas.
 
-av-version: A versão da base de dados de antivírus instalada.
-
-threat-version: A versão da base de dados de ameaças instalada.
-
-wf-private: Normalmente relacionado à versão do filtro de conteúdo, mas pode ser n/a (não aplicável) se não estiver em uso.
-
-url-filtering-version: A versão da base de dados de filtragem de URLs.
-
-logdb-version: A versão do banco de dados de logs do dispositivo.
-
-multi-vsys: Indica se o dispositivo está configurado para usar múltiplos sistemas virtuais (on ou off).
-
-state: O estado atual do dispositivo, como active (ativo) ou passive (passivo).
-
-management-ip: O endereço IP de gerenciamento do dispositivo.
-
-hostname: O nome do host do dispositivo, que é o identificador atribuído ao dispositivo dentro da rede.
+Uso Prático
+Grupos de endereços são frequentemente usados em políticas de segurança para simplificar e organizar as regras de firewall. Por exemplo, ao invés de aplicar uma política a vários endereços individuais, você pode aplicar a um grupo de endereços, o que facilita a manutenção e reduz o risco de erro na configuração.
