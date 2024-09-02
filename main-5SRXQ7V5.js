@@ -1,4 +1,4 @@
-O endpoint /Objects/CustomURLCategories da API do Palo Alto Panorama retorna informações sobre categorias de URLs personalizadas que foram configuradas no sistema. Essas categorias personalizadas permitem que os administradores agrupem e classifiquem URLs para aplicar políticas de segurança específicas, como bloqueio ou permissão de acesso a determinados sites.
+O endpoint /Objects/URLFilteringSecurityProfiles da API do Palo Alto Panorama retorna informações sobre perfis de segurança de filtragem de URL configurados no sistema. Esses perfis são usados para aplicar políticas de filtragem de URL que controlam o acesso a websites com base em categorias, classificações e ações definidas.
 
 Aqui está um exemplo de como uma possível resposta desse endpoint poderia ser:
 
@@ -10,54 +10,72 @@ Copy code
     "result": {
       "entry": [
         {
-          "@name": "blocked-social-media",
-          "description": "Custom category for blocking social media sites",
-          "list": [
-            "www.facebook.com",
-            "www.twitter.com",
-            "www.instagram.com"
-          ],
-          "type": "URL List",
-          "action": "block",
-          "tag": {
-            "member": [
-              "social-media",
-              "blocked"
+          "@name": "default-url-filtering-profile",
+          "description": "Default URL filtering profile",
+          "action": {
+            "category": [
+              {
+                "name": "social-media",
+                "action": "block"
+              },
+              {
+                "name": "news",
+                "action": "allow"
+              },
+              {
+                "name": "shopping",
+                "action": "alert"
+              }
             ]
+          },
+          "log-setting": {
+            "name": "default-log-setting"
           }
         },
         {
-          "@name": "allowed-news-sites",
-          "description": "Custom category for allowing specific news websites",
-          "list": [
-            "www.cnn.com",
-            "www.bbc.com",
-            "www.nytimes.com"
-          ],
-          "type": "URL List",
-          "action": "allow",
-          "tag": {
-            "member": [
-              "news",
-              "allowed"
+          "@name": "restricted-content-profile",
+          "description": "Profile for restricting access to certain content",
+          "action": {
+            "category": [
+              {
+                "name": "adult",
+                "action": "block"
+              },
+              {
+                "name": "gambling",
+                "action": "block"
+              },
+              {
+                "name": "entertainment",
+                "action": "allow"
+              }
             ]
+          },
+          "log-setting": {
+            "name": "restricted-log-setting"
           }
         },
         {
-          "@name": "restricted-shopping",
-          "description": "Custom category for restricting access to shopping websites",
-          "list": [
-            "www.amazon.com",
-            "www.ebay.com",
-            "www.aliexpress.com"
-          ],
-          "type": "URL List",
-          "action": "alert",
-          "tag": {
-            "member": [
-              "shopping",
-              "restricted"
+          "@name": "business-acceptable-content",
+          "description": "Profile for acceptable business content",
+          "action": {
+            "category": [
+              {
+                "name": "business",
+                "action": "allow"
+              },
+              {
+                "name": "social-media",
+                "action": "block"
+              },
+              {
+                "name": "news",
+                "action": "allow"
+              }
             ]
+          },
+          "log-setting": {
+            "name": "business-log-setting"
           }
         }
       ]
@@ -65,28 +83,39 @@ Copy code
   }
 }
 Explicação dos Campos
-@name: Nome da categoria personalizada de URLs, servindo como identificador único.
+@name: Nome do perfil de filtragem de URL, que serve como identificador único.
 
-description: Descrição opcional que explica o propósito ou o conteúdo da categoria de URLs.
+description: Descrição opcional que explica o propósito ou a configuração do perfil.
 
-list: Lista de URLs ou padrões de URLs que pertencem a essa categoria personalizada. Essas URLs são aquelas que serão classificadas sob essa categoria para a aplicação de políticas.
+action: Define as ações a serem aplicadas com base nas categorias de URLs. Pode incluir várias categorias com ações específicas, como block, allow, ou alert.
 
-type: Tipo de categoria. Geralmente será "URL List" para listas específicas de URLs.
+category: Lista de categorias de URLs e as ações associadas a essas categorias.
+log-setting: Configuração de logging associada ao perfil. Indica a configuração que define como e onde os logs relacionados à filtragem de URL devem ser registrados.
 
-action: Ação associada a essa categoria. Pode ser block, allow, alert, etc., dependendo de como a categoria será utilizada nas políticas de segurança.
+name: Nome da configuração de logging associada ao perfil de filtragem de URL.
+Tipos de Perfis de Filtragem de URL
+Perfis de Filtragem de URL Padrão: Perfis que são aplicados para situações gerais e podem incluir regras para categorias comuns, como redes sociais e notícias.
 
-tag: Lista de tags associadas à categoria personalizada de URLs, usadas para organização e categorização.
+Perfis de Filtragem Restritiva: Perfis configurados para restringir o acesso a categorias específicas de conteúdo, como conteúdo adulto ou jogos de azar.
 
-Tipos de Categorias de URLs
-Categorias de URLs Personalizadas: São criadas pelo administrador para atender a necessidades específicas de controle de acesso, que não são cobertas pelas categorias padrão do sistema.
+Perfis de Filtragem para Conteúdo de Negócios: Perfis projetados para permitir o acesso a conteúdo relevante para negócios, enquanto bloqueiam conteúdo não relacionado ou distrativo.
+
 Uso Prático
-Categorias de URLs personalizadas são usadas para aplicar políticas específicas a grupos de URLs que o administrador deseja gerenciar de maneira particular. Isso permite, por exemplo, bloquear, permitir ou monitorar o acesso a determinados tipos de sites com base em regras de negócios ou políticas de segurança.
+Perfis de segurança de filtragem de URL são usados para aplicar regras de acesso a sites em uma rede. Eles permitem que as organizações controlem o acesso a diferentes tipos de conteúdo da web com base em categorias definidas e ações associadas. Esses perfis podem ser aplicados em regras de firewall para garantir que os usuários tenham acesso a conteúdos permitidos enquanto são restritos de acessar conteúdos não desejados.
 
 Exemplos de Aplicação
-Categoria Personalizada para Bloqueio de Redes Sociais (blocked-social-media): Inclui URLs de redes sociais como Facebook, Twitter e Instagram. Essa categoria poderia ser usada em uma política que bloqueia o acesso a redes sociais durante o horário de trabalho.
+Perfil de Filtragem Padrão (default-url-filtering-profile): Pode ser configurado para bloquear o acesso a redes sociais, permitir o acesso a sites de notícias, e alertar sobre o acesso a sites de compras.
 
-Categoria Personalizada para Permissão de Sites de Notícias (allowed-news-sites): Inclui URLs de sites de notícias confiáveis. Esta categoria poderia ser utilizada em uma política que permite o acesso a certos sites de notícias, enquanto outros permanecem bloqueados.
+Perfil de Conteúdo Restrito (restricted-content-profile): Pode ser usado para bloquear o acesso a conteúdo adulto e jogos de azar, enquanto permite o acesso a entretenimento.
 
-Categoria Personalizada para Restrição de Compras Online (restricted-shopping): Inclui URLs de sites de compras como Amazon, eBay e AliExpress. Esta categoria poderia ser usada em uma política que monitora ou restringe o acesso a sites de compras para evitar distrações no ambiente de trabalho.
+Perfil de Conteúdo Aceitável para Negócios (business-acceptable-content): Permite o acesso a conteúdo de negócios e notícias, enquanto bloqueia o acesso a redes sociais.
 
-Esses exemplos mostram como as categorias de URLs personalizadas permitem uma maior flexibilidade e controle na aplicação de políticas de segurança, adaptadas às necessidades específicas da organização.
+Esses perfis ajudam a aplicar políticas de segurança de forma mais granular e eficaz, com base nas necessidades específicas da organização.
+
+
+
+
+
+
+
+
