@@ -1,4 +1,4 @@
-O endpoint /Objects/ApplicationGroups da API do Palo Alto Panorama retorna informações sobre grupos de aplicativos configurados no sistema. Esses grupos de aplicativos são coleções de definições de aplicativos que facilitam a aplicação de regras de firewall e políticas de segurança.
+O endpoint /Objects/CustomURLCategories da API do Palo Alto Panorama retorna informações sobre categorias de URLs personalizadas que foram configuradas no sistema. Essas categorias personalizadas permitem que os administradores agrupem e classifiquem URLs para aplicar políticas de segurança específicas, como bloqueio ou permissão de acesso a determinados sites.
 
 Aqui está um exemplo de como uma possível resposta desse endpoint poderia ser:
 
@@ -10,50 +10,53 @@ Copy code
     "result": {
       "entry": [
         {
-          "@name": "social-media-group",
-          "description": "Group for all social media applications",
-          "member": [
-            "facebook",
-            "twitter",
-            "instagram",
-            "linkedin"
+          "@name": "blocked-social-media",
+          "description": "Custom category for blocking social media sites",
+          "list": [
+            "www.facebook.com",
+            "www.twitter.com",
+            "www.instagram.com"
           ],
+          "type": "URL List",
+          "action": "block",
           "tag": {
             "member": [
               "social-media",
-              "internet"
+              "blocked"
             ]
           }
         },
         {
-          "@name": "video-streaming-group",
-          "description": "Group for video streaming applications",
-          "member": [
-            "youtube",
-            "netflix",
-            "hulu",
-            "vimeo"
+          "@name": "allowed-news-sites",
+          "description": "Custom category for allowing specific news websites",
+          "list": [
+            "www.cnn.com",
+            "www.bbc.com",
+            "www.nytimes.com"
           ],
+          "type": "URL List",
+          "action": "allow",
           "tag": {
             "member": [
-              "video-streaming",
-              "entertainment"
+              "news",
+              "allowed"
             ]
           }
         },
         {
-          "@name": "remote-access-group",
-          "description": "Group for remote access applications",
-          "member": [
-            "ssh",
-            "rdp",
-            "teamviewer",
-            "citrix"
+          "@name": "restricted-shopping",
+          "description": "Custom category for restricting access to shopping websites",
+          "list": [
+            "www.amazon.com",
+            "www.ebay.com",
+            "www.aliexpress.com"
           ],
+          "type": "URL List",
+          "action": "alert",
           "tag": {
             "member": [
-              "remote-access",
-              "business"
+              "shopping",
+              "restricted"
             ]
           }
         }
@@ -62,24 +65,28 @@ Copy code
   }
 }
 Explicação dos Campos
-@name: Nome do grupo de aplicativos, que serve como identificador único do grupo.
+@name: Nome da categoria personalizada de URLs, servindo como identificador único.
 
-description: Descrição opcional que explica o propósito ou o conteúdo do grupo de aplicativos.
+description: Descrição opcional que explica o propósito ou o conteúdo da categoria de URLs.
 
-member: Lista de nomes de aplicativos que fazem parte do grupo. Cada item nesta lista corresponde a um aplicativo individual reconhecido pelo sistema, como Facebook ou YouTube.
+list: Lista de URLs ou padrões de URLs que pertencem a essa categoria personalizada. Essas URLs são aquelas que serão classificadas sob essa categoria para a aplicação de políticas.
 
-tag: Lista de tags associadas ao grupo de aplicativos. As tags ajudam na organização e categorização dos grupos, facilitando a gestão e busca.
+type: Tipo de categoria. Geralmente será "URL List" para listas específicas de URLs.
 
-Tipos de Grupos de Aplicativos
-Grupos de Aplicativos Estáticos: São definidos explicitamente com uma lista de aplicativos conhecidos e classificados pelo firewall.
+action: Ação associada a essa categoria. Pode ser block, allow, alert, etc., dependendo de como a categoria será utilizada nas políticas de segurança.
+
+tag: Lista de tags associadas à categoria personalizada de URLs, usadas para organização e categorização.
+
+Tipos de Categorias de URLs
+Categorias de URLs Personalizadas: São criadas pelo administrador para atender a necessidades específicas de controle de acesso, que não são cobertas pelas categorias padrão do sistema.
 Uso Prático
-Grupos de aplicativos são usados para simplificar a aplicação de políticas de segurança que se aplicam a várias aplicações similares. Em vez de criar regras individuais para cada aplicativo, as políticas podem ser aplicadas a todo o grupo, o que facilita a configuração e a manutenção do sistema.
+Categorias de URLs personalizadas são usadas para aplicar políticas específicas a grupos de URLs que o administrador deseja gerenciar de maneira particular. Isso permite, por exemplo, bloquear, permitir ou monitorar o acesso a determinados tipos de sites com base em regras de negócios ou políticas de segurança.
 
 Exemplos de Aplicação
-Grupo de Mídias Sociais (social-media-group): Inclui aplicativos populares de redes sociais como Facebook, Twitter, Instagram, e LinkedIn. Esse grupo pode ser usado para aplicar políticas específicas para o tráfego relacionado a mídias sociais.
+Categoria Personalizada para Bloqueio de Redes Sociais (blocked-social-media): Inclui URLs de redes sociais como Facebook, Twitter e Instagram. Essa categoria poderia ser usada em uma política que bloqueia o acesso a redes sociais durante o horário de trabalho.
 
-Grupo de Streaming de Vídeo (video-streaming-group): Agrupa serviços de streaming de vídeo como YouTube e Netflix, permitindo a aplicação de políticas de controle de banda ou bloqueio de tráfego de entretenimento durante o horário de trabalho, por exemplo.
+Categoria Personalizada para Permissão de Sites de Notícias (allowed-news-sites): Inclui URLs de sites de notícias confiáveis. Esta categoria poderia ser utilizada em uma política que permite o acesso a certos sites de notícias, enquanto outros permanecem bloqueados.
 
-Grupo de Acesso Remoto (remote-access-group): Inclui aplicativos usados para acesso remoto, como SSH, RDP, e TeamViewer. Esse grupo pode ser utilizado para controlar ou monitorar o tráfego de acesso remoto na rede corporativa.
+Categoria Personalizada para Restrição de Compras Online (restricted-shopping): Inclui URLs de sites de compras como Amazon, eBay e AliExpress. Esta categoria poderia ser usada em uma política que monitora ou restringe o acesso a sites de compras para evitar distrações no ambiente de trabalho.
 
-Esses exemplos mostram como o uso de grupos de aplicativos facilita a gestão de regras e políticas de segurança, permitindo que uma única regra cubra um conjunto de aplicativos relacionados, em vez de precisar de regras individuais para cada aplicativo.
+Esses exemplos mostram como as categorias de URLs personalizadas permitem uma maior flexibilidade e controle na aplicação de políticas de segurança, adaptadas às necessidades específicas da organização.
