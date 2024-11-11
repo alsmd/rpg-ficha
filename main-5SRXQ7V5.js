@@ -1,135 +1,74 @@
-O endpoint /Policies/SecurityPreRules na API do Palo Alto Panorama retorna as regras de segurança pré-configuradas (ou "Pre-Rules") em um dispositivo ou grupo de dispositivos gerenciados. As Pre-Rules são políticas de segurança que são aplicadas antes das regras locais específicas de um dispositivo.
+Para usar o AWS Glue para extrair dados de uma tabela no Amazon Athena e armazená-los em uma instância de banco de dados RDS, você pode seguir estes passos:
 
-Aqui está um exemplo de como uma possível resposta desse endpoint poderia ser:
+1. Criar o Crawler no Glue para Catalogar a Tabela Athena
+Primeiro, você precisa de um AWS Glue Crawler que identifique e catalogue as tabelas do Amazon S3 usadas pelo Athena.
 
-json
+No console do AWS Glue, vá para a seção de Crawlers e crie um novo.
+Configure o Crawler para apontar para o bucket S3 onde estão os dados que você consulta pelo Athena.
+Defina as configurações para que ele catalogue a tabela no Glue Data Catalog.
+Execute o Crawler para garantir que a tabela apareça no Glue Data Catalog.
+2. Configurar o Glue Job para Extrair os Dados
+Após catalogar a tabela, crie um Glue Job para extrair os dados do Glue Data Catalog (ou diretamente do Athena) e salvá-los no Amazon RDS.
+
+No console do AWS Glue, vá para a seção de Jobs e crie um novo Job.
+Selecione o Glue Data Catalog como a fonte de dados (escolha a tabela catalogada pelo Crawler).
+Selecione Amazon RDS como o destino e configure as credenciais de conexão com o banco de dados RDS.
+Para isso, você vai precisar de uma Connection:
+
+Vá para a seção Connections no Glue, e crie uma conexão que aponta para a instância RDS.
+Insira o endpoint, nome do banco, usuário e senha do RDS.
+Se a instância RDS está em uma VPC, você deve configurar permissões e definir uma role para que o Glue possa acessar a VPC.
+3. Escrever o Script de Transformação (Opcional)
+Se precisar transformar os dados (por exemplo, ajustar o schema ou processar colunas), você pode usar o editor do Glue para personalizar o script.
+
+O AWS Glue usa PySpark, então você pode personalizar seu Job em Python (Spark) para manipular os dados.
+Exemplo de um script básico:
+
+python
 Copy code
-{
-  "response": {
-    "status": "success",
-    "result": {
-      "rules": {
-        "entry": [
-          {
-            "@name": "Allow-Web-Traffic",
-            "from": {
-              "member": ["trust"]
-            },
-            "to": {
-              "member": ["untrust"]
-            },
-            "source": {
-              "member": ["any"]
-            },
-            "destination": {
-              "member": ["any"]
-            },
-            "source-user": {
-              "member": ["any"]
-            },
-            "category": {
-              "member": ["any"]
-            },
-            "application": {
-              "member": ["web-browsing", "ssl"]
-            },
-            "service": {
-              "member": ["application-default"]
-            },
-            "hip-profiles": {
-              "member": ["any"]
-            },
-            "action": "allow",
-            "log-setting": "Log-Forwarding-Profile",
-            "log-start": "yes",
-            "log-end": "yes",
-            "description": "Allow all web traffic to external networks",
-            "tag": {
-              "member": ["web-traffic"]
-            },
-            "group": "Security Group 1"
-          },
-          {
-            "@name": "Deny-Unauthorized-Access",
-            "from": {
-              "member": ["untrust"]
-            },
-            "to": {
-              "member": ["trust"]
-            },
-            "source": {
-              "member": ["any"]
-            },
-            "destination": {
-              "member": ["any"]
-            },
-            "source-user": {
-              "member": ["any"]
-            },
-            "category": {
-              "member": ["any"]
-            },
-            "application": {
-              "member": ["any"]
-            },
-            "service": {
-              "member": ["any"]
-            },
-            "hip-profiles": {
-              "member": ["any"]
-            },
-            "action": "deny",
-            "log-setting": "Log-Forwarding-Profile",
-            "log-start": "yes",
-            "log-end": "yes",
-            "description": "Deny all unauthorized access to internal networks",
-            "tag": {
-              "member": ["security"]
-            },
-            "group": "Security Group 2"
-          }
-        ]
-      }
-    }
-  }
-}
-Explicação dos Campos
-@name: Nome da regra de segurança. Este é o identificador da regra.
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
 
-from: Define a zona de origem (por exemplo, trust, untrust). Indica de onde o tráfego está vindo.
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
 
-to: Define a zona de destino. Indica para onde o tráfego está indo.
+# Ler a tabela catalogada do Glue Data Catalog
+datasource = glueContext.create_dynamic_frame.from_catalog(
+    database="nome_do_seu_catalogo",
+    table_name="nome_da_tabela_athena"
+)
 
-source: Especifica os endereços IP de origem para os quais a regra se aplica. any significa qualquer IP de origem.
+# (Opcional) Transformação de dados
 
-destination: Especifica os endereços IP de destino para os quais a regra se aplica. any significa qualquer IP de destino.
+# Carregar os dados no Amazon RDS
+glueContext.write_dynamic_frame.from_jdbc_conf(
+    frame=datasource,
+    catalog_connection="sua_conexao_rds",
+    connection_options={"dbtable": "nome_da_tabela_destino", "database": "nome_do_database"},
+    transformation_ctx="datasink"
+)
 
-source-user: Define os usuários de origem. any significa qualquer usuário.
+job.commit()
+4. Configurar Permissões e IAM Role
+Certifique-se de que o Glue Job Role possui permissões necessárias para:
 
-category: Define as categorias de URL, se aplicável. any significa qualquer categoria.
+Acessar o bucket S3 (para ler dados via Athena).
+Acessar o Glue Data Catalog.
+Conectar-se ao Amazon RDS.
+Acessar a VPC (caso o RDS esteja em uma VPC).
+5. Executar o Glue Job
+Execute o Job e verifique no RDS se os dados foram salvos conforme esperado.
 
-application: Especifica as aplicações que esta regra cobre (por exemplo, web-browsing, ssl).
 
-service: Define os serviços que a regra cobre. application-default refere-se aos serviços padrão das aplicações especificadas.
 
-hip-profiles: Define os perfis HIP (Host Information Profile) aplicáveis. any significa qualquer perfil HIP.
 
-action: A ação da regra, como allow (permitir) ou deny (negar).
 
-log-setting: Nome do perfil de log associado à regra.
 
-log-start e log-end: Indicadores de que o início e/ou o fim da sessão deve ser registrado nos logs.
-
-description: Uma descrição da regra para ajudar na identificação do propósito da regra.
-
-tag: Tags associadas à regra, para facilitar a categorização e gestão.
-
-group: Nome do grupo de segurança ao qual a regra pertence.
-
-Exemplos de Uso
-Allow-Web-Traffic: Esta regra permite o tráfego da zona trust (geralmente a rede interna) para a zona untrust (geralmente a internet) para as aplicações de navegação na web (web-browsing, ssl). O tráfego é permitido e o início e fim das sessões são registrados nos logs.
-
-Deny-Unauthorized-Access: Esta regra nega todo o tráfego de entrada da zona untrust para a zona trust, prevenindo acessos não autorizados. Também registra o início e fim das tentativas de acesso.
-
-Aplicação Prática
-As Pre-Rules são especialmente úteis em ambientes onde múltiplos dispositivos compartilham uma configuração centralizada. Ao configurar regras como essas no Panorama, você assegura que todos os dispositivos dentro de um grupo seguem as mesmas políticas de segurança, simplificando a gestão e aumentando a consistência das regras aplicadas em toda a infraestrutura de segurança.
