@@ -1,74 +1,55 @@
-Para usar o AWS Glue para extrair dados de uma tabela no Amazon Athena e armazená-los em uma instância de banco de dados RDS, você pode seguir estes passos:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfico de Evolução</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Gráfico de Evolução</h1>
+    <canvas id="grafico-evolucao" width="400" height="200"></canvas>
+    <script>
+        const valores = JSON.parse('{{ valores|safe }}');  // Passar dados do backend para o frontend
 
-1. Criar o Crawler no Glue para Catalogar a Tabela Athena
-Primeiro, você precisa de um AWS Glue Crawler que identifique e catalogue as tabelas do Amazon S3 usadas pelo Athena.
+        // Processar os dados
+        const labels = valores.map(item => item.data.split(' ')[0]); // Apenas a data
+        const dataValues = valores.map(item => item.valor);
 
-No console do AWS Glue, vá para a seção de Crawlers e crie um novo.
-Configure o Crawler para apontar para o bucket S3 onde estão os dados que você consulta pelo Athena.
-Defina as configurações para que ele catalogue a tabela no Glue Data Catalog.
-Execute o Crawler para garantir que a tabela apareça no Glue Data Catalog.
-2. Configurar o Glue Job para Extrair os Dados
-Após catalogar a tabela, crie um Glue Job para extrair os dados do Glue Data Catalog (ou diretamente do Athena) e salvá-los no Amazon RDS.
-
-No console do AWS Glue, vá para a seção de Jobs e crie um novo Job.
-Selecione o Glue Data Catalog como a fonte de dados (escolha a tabela catalogada pelo Crawler).
-Selecione Amazon RDS como o destino e configure as credenciais de conexão com o banco de dados RDS.
-Para isso, você vai precisar de uma Connection:
-
-Vá para a seção Connections no Glue, e crie uma conexão que aponta para a instância RDS.
-Insira o endpoint, nome do banco, usuário e senha do RDS.
-Se a instância RDS está em uma VPC, você deve configurar permissões e definir uma role para que o Glue possa acessar a VPC.
-3. Escrever o Script de Transformação (Opcional)
-Se precisar transformar os dados (por exemplo, ajustar o schema ou processar colunas), você pode usar o editor do Glue para personalizar o script.
-
-O AWS Glue usa PySpark, então você pode personalizar seu Job em Python (Spark) para manipular os dados.
-Exemplo de um script básico:
-
-python
-Copy code
-import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
-
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
-
-# Ler a tabela catalogada do Glue Data Catalog
-datasource = glueContext.create_dynamic_frame.from_catalog(
-    database="nome_do_seu_catalogo",
-    table_name="nome_da_tabela_athena"
-)
-
-# (Opcional) Transformação de dados
-
-# Carregar os dados no Amazon RDS
-glueContext.write_dynamic_frame.from_jdbc_conf(
-    frame=datasource,
-    catalog_connection="sua_conexao_rds",
-    connection_options={"dbtable": "nome_da_tabela_destino", "database": "nome_do_database"},
-    transformation_ctx="datasink"
-)
-
-job.commit()
-4. Configurar Permissões e IAM Role
-Certifique-se de que o Glue Job Role possui permissões necessárias para:
-
-Acessar o bucket S3 (para ler dados via Athena).
-Acessar o Glue Data Catalog.
-Conectar-se ao Amazon RDS.
-Acessar a VPC (caso o RDS esteja em uma VPC).
-5. Executar o Glue Job
-Execute o Job e verifique no RDS se os dados foram salvos conforme esperado.
-
-
-
-
-
-
+        // Configuração do gráfico
+        const ctx = document.getElementById('grafico-evolucao').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line', // Gráfico de linha
+            data: {
+                labels: labels, // Datas
+                datasets: [{
+                    label: 'Evolução dos Valores',
+                    data: dataValues, // Valores
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    tension: 0.4 // Suaviza as linhas
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Data'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Valor'
+                        },
+                        beginAtZero: true // Inicia o eixo Y no zero
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
