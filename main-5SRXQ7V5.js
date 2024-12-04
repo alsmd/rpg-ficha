@@ -1,72 +1,89 @@
-import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.job import Job
 import boto3
+import pandas as pd
+import time
 
-# Inicialização do Glue Context
-args = getResolvedOptions(sys.argv, ["JOB_NAME"])
-sc = SparkContext()
-glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args["JOB_NAME"], args)
+# Configurações
+DATABASE = 'meu_catalogo'
+OUTPUT_BUCKET = 's3://meu-bucket-saida/'
+ATHENA_CLIENT = boto3.client('athena')
 
-# Caminhos S3
-source_path = "s3://source-bucket/src/"
-destination_path = "s3://destination-bucket/target/"
-
-# Função para limpar o destino
-def clear_s3_path(bucket_name, prefix):
-    s3 = boto3.resource("s3")
-    bucket = s3.Bucket(bucket_name)
-    print(f"Limpando o caminho: s3://{bucket_name}/{prefix}")
-    bucket.objects.filter(Prefix=prefix).delete()
-
-# Extrair nome do bucket e prefix do destino
-dest_bucket = "destination-bucket"
-dest_prefix = "target/"
-
-# Limpa os dados existentes no destino
-try:
-    clear_s3_path(dest_bucket, dest_prefix)
-    print("Destino limpo com sucesso.")
-except Exception as e:
-    print(f"Erro ao limpar o destino: {e}")
-    job.commit()
-    sys.exit(1)
-
-# Lê os dados do bucket de origem
-try:
-    dynamic_frame = glueContext.create_dynamic_frame.from_options(
-        connection_type="s3",
-        connection_options={"paths": [source_path]},
-        format="json"  # Substitua pelo formato correto: 'csv', 'parquet', etc.
+def execute_query(query):
+    """Executa uma query no Athena e retorna o QueryExecutionId."""
+    response = ATHENA_CLIENT.start_query_execution(
+        QueryString=query,
+        QueryExecutionContext={'Database': DATABASE},
+        ResultConfiguration={'OutputLocation': OUTPUT_BUCKET}
     )
-    print("Leitura dos dados concluída.")
-except Exception as e:
-    print(f"Erro ao ler dados da origem: {e}")
-    job.commit()
-    sys.exit(1)
+    return response['QueryExecutionId']
 
-# Verifica se há dados no DynamicFrame
-if dynamic_frame.count() == 0:
-    print("Nenhum dado encontrado na origem. Verifique o caminho ou o formato.")
-    job.commit()
-    sys.exit(1)
+def wait_for_query(query_execution_id):
+    """Aguarda a conclusão de uma query no Athena."""
+    while True:
+        status = ATHENA_CLIENT.get_query_execution(QueryExecutionId=query_execution_id)
+        state = status['QueryExecution']['Status']['State']
+        if state in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
+            return state
+        time.sleep(2)
 
-# Grava os dados no bucket de destino
-try:
-    glueContext.write_dynamic_frame.from_options(
-        frame=dynamic_frame,
-        connection_type="s3",
-        connection_options={"path": destination_path},
-        format="json"  # Substitua pelo formato desejado: 'csv', 'parquet', etc.
-    )
-    print("Gravação dos dados concluída.")
-except Exception as e:
-    print(f"Erro ao gravar dados no destino: {e}")
+def get_query_results(query_execution_id):
+    """Obtém os resultados da query no Athena."""
+    results = ATHENA_CLIENT.get_query_results(QueryExecutionId=query_execution_id)
+    rows = []
+    for row in results['ResultSet']['Rows'][1:]:  # Ignora cabeçalho
+        rows.append([col.get('VarCharValue', '') for col in row['Data']])
+    return rows
 
-job.commit()
+# Consultas
+query_servidor = """
+SELECT nome, ip, status
+FROM servidor
+WHERE status != 'Aposentado';
+"""
+
+query_sigla = """
+SELECT DISTINCT nome, servidor
+FROM sigla;
+"""
+
+query_responsavel = """
+SELECT sigla, nome_responsavel, func_responsavel, grupo_suporte
+FROM responsavel;
+"""
+
+# Executar as consultas
+query_ids = {
+    "servidor": execute_query(query_servidor),
+    "sigla": execute_query(query_sigla),
+    "responsavel": execute_query(query_responsavel)
+}
+
+# Aguardar a conclusão
+for key, query_id in query_ids.items():
+    if wait_for_query(query_id) != "SUCCEEDED":
+        raise Exception(f"Query {key} falhou.")
+
+# Obter os resultados
+servidores = get_query_results(query_ids["servidor"])
+siglas = get_query_results(query_ids["sigla"])
+responsaveis = get_query_results(query_ids["responsavel"])
+
+# Criar DataFrames
+df_servidores = pd.DataFrame(servidores, columns=['nome_servidor', 'ip', 'status'])
+df_siglas = pd.DataFrame(siglas, columns=['sigla', 'nome_servidor'])
+df_responsaveis = pd.DataFrame(responsaveis, columns=['sigla', 'nome_responsavel', 'func_responsavel', 'grupo_suporte'])
+
+# Mesclar os dados
+df_merged = (
+    df_servidores.merge(df_siglas, on='nome_servidor', how='inner')
+    .merge(df_responsaveis, on='sigla', how='inner')
+    [['ip', 'nome_servidor', 'sigla', 'nome_responsavel', 'func_responsavel', 'grupo_suporte']]
+)
+
+# Salvar no S3
+output_file = '/tmp/output.csv'
+df_merged.to_csv(output_file, index=False)
+
+s3_client = boto3.client('s3')
+s3_client.upload_file(output_file, 'meu-bucket-saida', 'nova_tabela.csv')
+
+print("Arquivo gerado com sucesso e enviado para o S3.")
