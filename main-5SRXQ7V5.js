@@ -26,11 +26,14 @@ def wait_for_query(query_execution_id):
         time.sleep(2)
 
 def get_query_results(query_execution_id):
-    """Obtém os resultados da query no Athena."""
-    results = ATHENA_CLIENT.get_query_results(QueryExecutionId=query_execution_id)
+    """Obtém todos os resultados da query no Athena usando paginação."""
+    paginator = ATHENA_CLIENT.get_paginator('get_query_results')
+    results_iter = paginator.paginate(QueryExecutionId=query_execution_id)
+
     rows = []
-    for row in results['ResultSet']['Rows'][1:]:  # Ignora cabeçalho
-        rows.append([col.get('VarCharValue', '') for col in row['Data']])
+    for page in results_iter:
+        for row in page['ResultSet']['Rows'][1:]:  # Ignora cabeçalho
+            rows.append([col.get('VarCharValue', '') for col in row['Data']])
     return rows
 
 # Consultas
