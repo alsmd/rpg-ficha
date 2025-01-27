@@ -1,44 +1,73 @@
-import boto3
-import csv
-import io
+provider "aws" {
+  region = "us-east-1" # Altere para sua região
+}
 
-# Configurações do S3
-S3_BUCKET = 'meu-bucket-saida'
-CSV_FILE_KEY = 'nova_tabela.csv'
+resource "aws_lambda_function" "example" {
+  filename         = "lambda_function_payload.zip" # O arquivo compactado contendo o código da sua Lambda
+  function_name    = "daily-scheduler-lambda"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "index.handler" # Nome do arquivo e função handler no código
+  runtime          = "nodejs18.x"    # Ajuste conforme sua linguagem (ex: python3.9)
+  source_code_hash = filebase64sha256("lambda_function_payload.zip")
+}
 
-def lambda_handler(event, context):
-    ip = event.get('ip')
-    if not ip:
-        return {"error": "IP não fornecido no evento"}
+resource "aws_iam_role" "lambda_exec" {
+  name = "lambda_exec_role"
 
-    s3_client = boto3.client('s3')
-    
-    # Configuração do S3 Select
-    expression = f"SELECT * FROM S3Object WHERE _3 = '{ip}'"  # '_3' refere-se à coluna IP
-    input_serialization = {"CSV": {"FileHeaderInfo": "Use"}}
-    output_serialization = {"CSV": {}}
-    
-    try:
-        response = s3_client.select_object_content(
-            Bucket=S3_BUCKET,
-            Key=CSV_FILE_KEY,
-            ExpressionType='SQL',
-            Expression=expression,
-            InputSerialization=input_serialization,
-            OutputSerialization=output_serialization,
-        )
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
 
-        # Processar os resultados
-        result_rows = []
-        for event_stream in response['Payload']:
-            if 'Records' in event_stream:
-                records = event_stream['Records']['Payload']
-                csv_lines = records.decode('utf-8')
-                reader = csv.reader(io.StringIO(csv_lines))
-                result_rows.extend(list(reader))
-        
-        # Retornar os resultados
-        return {"ip": ip, "resultados": result_rows}
-    
-    except Exception as e:
-        return {"error": str(e)}
+resource "aws_iam_policy" "lambda_exec_policy" {
+  name        = "lambda_exec_policy"
+  description = "IAM policy for Lambda execution"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.lambda_exec_policy.arn
+}
+
+resource "aws_cloudwatch_event_rule" "daily_event" {
+  name        = "daily-schedule"
+  description = "Trigger Lambda daily"
+  schedule_expression = "rate(1 day)" # Alterar para a frequência desejada
+}
+
+resource "aws_cloudwatch_event_target" "lambda_target" {
+  rule      = aws_cloudwatch_event_rule.daily_event.name
+  target_id = "daily-lambda-target"
+  arn       = aws_lambda_function.example.arn
+}
+
+resource "aws_lambda_permission" "allow_event" {
+  statement_id  = "AllowEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.example.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.daily_event.arn
+}
