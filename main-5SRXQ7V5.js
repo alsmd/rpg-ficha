@@ -1,80 +1,37 @@
-provider "aws" {
-  region = "us-east-1" # Altere para a região desejada
-}
+import pymysql
+import os
 
-# Função Lambda
-resource "aws_lambda_function" "example" {
-  filename         = "lambda_function_payload.zip" # Código compactado da Lambda
-  function_name    = "daily-scheduler-lambda"
-  role             = aws_iam_role.lambda_exec.arn
-  handler          = "index.handler" # Handler no código
-  runtime          = "nodejs18.x"    # Ajuste conforme a linguagem usada
-  source_code_hash = filebase64sha256("lambda_function_payload.zip")
-}
+# Variáveis de ambiente no Lambda
+DB_HOST = os.environ['DB_HOST']
+DB_NAME = os.environ['DB_NAME']
+DB_USER = os.environ['DB_USER']
+DB_PASSWORD = os.environ['DB_PASSWORD']
+DB_PORT = int(os.environ['DB_PORT'])  # Certifique-se que a porta seja um número
 
-# Papel (Role) para a Lambda
-resource "aws_iam_role" "lambda_exec" {
-  name = "lambda_exec_role"
+def lambda_handler(event, context):
+    try:
+        # Conectar ao banco de dados
+        connection = pymysql.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            port=DB_PORT,
+            cursorclass=pymysql.cursors.DictCursor
+        )
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT NOW() as current_time;")
+            result = cursor.fetchone()
+
+        connection.close()
+        return {
+            "statusCode": 200,
+            "body": f"Conexão bem-sucedida! Hora do banco: {result['current_time']}"
         }
-      }
-    ]
-  })
-}
 
-# Política para a Lambda
-resource "aws_iam_policy" "lambda_exec_policy" {
-  name        = "lambda_exec_policy"
-  description = "IAM policy for Lambda execution"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
-}
-
-# Associar a política ao papel da Lambda
-resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = aws_iam_policy.lambda_exec_policy.arn
-}
-
-# Agendamento do EventBridge Scheduler
-resource "aws_scheduler_schedule" "daily_schedule" {
-  name          = "daily-schedule"
-  schedule_expression = "rate(1 day)" # Frequência do agendamento
-  flexible_time_window {
-    mode = "OFF"
-  }
-  target {
-    arn     = aws_lambda_function.example.arn
-    role_arn = aws_iam_role.lambda_exec.arn # Papel usado para invocar a Lambda
-    input    = jsonencode({ message = "Hello from EventBridge Scheduler" }) # Dados de entrada para a Lambda
-  }
-}
-
-# Permissão para o Scheduler invocar a Lambda
-resource "aws_lambda_permission" "allow_scheduler" {
-  statement_id  = "AllowScheduler"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.example.function_name
-  principal     = "scheduler.amazonaws.com"
-  source_arn    = aws_scheduler_schedule.daily_schedule.arn
-}
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": f"Erro ao conectar: {str(e)}"
+        }
