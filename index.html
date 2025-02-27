@@ -1,40 +1,23 @@
-1const getTop10Pedidos = async () => {
-2  const params = {
-3    TableName: 'Pedidos',
-4    IndexName: 'ItemIndex',
-5    KeyConditionExpression: 'item_id = :item_id',
-6    ExpressionAttributeValues: {
-7      ':item_id': 'ITEM_ID_AQUI' // Substitua pelo ID do item que deseja consultar
-8    },
-9    ScanIndexForward: false, // Ordenação decrescente
-10    Limit: 10
-11  };
-12
-13  const result = await dynamodb.query(params).promise();
-14  return result.Items;
-15};
-Atualizar o estoque ao realizar um pedido:
-Subtraia a quantidade do item no estoque ao registrar um pedido.
-Exemplo:
+Estrutura:
+Partition Key (PK): order_id (ID único do pedido)
+Sort Key (SK): timestamp (Data e hora do pedido)
+Atributos adicionais:
+item_id (ID do item do pedido)
+quantity (Quantidade do item)
+customer_id (ID do cliente)
+total_price (Preço total do pedido)
+Índice Secundário Global (GSI):
+GSI1:
+Partition Key: item_id
+Sort Key: quantity
+Uso: Para consultar os itens mais pedidos.
+Tabela 2: Estoque
+Essa tabela armazenará os itens disponíveis no estoque.
 
-1const atualizarEstoque = async (itemId, quantidade) => {
-2  const params = {
-3    TableName: 'Estoque',
-4    Key: { item_id: { S: itemId } },
-5    UpdateExpression: 'SET stock_quantity = stock_quantity - :qtd',
-6    ExpressionAttributeValues: {
-7      ':qtd': { N: quantidade.toString() }
-8    },
-9    ConditionExpression: 'stock_quantity >= :qtd', // Garante que não fique negativo
-10    ReturnValues: 'UPDATED_NEW'
-11  };
-12
-13  try {
-14    const result = await dynamodb.updateItem(params).promise();
-15    console.log('Estoque atualizado:', result);
-16  } catch (error) {
-17    console.error('Erro ao atualizar estoque:', error);
-18  }
-19};
-Com essas tabelas e consultas, você terá uma base sólida para gerenciar pedidos e estoque no restaurante, além de responder perguntas como os itens mais pedidos.
-
+Estrutura:
+Partition Key (PK): item_id (ID único do item)
+Sort Key (SK): category (Categoria do item)
+Atributos adicionais:
+item_name (Nome do item)
+stock_quantity (Quantidade em estoque)
+price (Preço do item)
