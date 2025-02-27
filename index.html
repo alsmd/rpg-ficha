@@ -1,14 +1,40 @@
-<!doctype html>
-<html lang="en" data-critters-container>
-<head>
-  <meta charset="utf-8">
-  <title>Rpg</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-<style>*,*:before,*:after{box-sizing:border-box}body{background-image:url("./media/tec-5FTYD2PQ.jpg");background-size:100vw 100vh;background-repeat:no-repeat;background-attachment:fixed}
-</style><link rel="stylesheet" href="styles-EZBTZVSO.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles-EZBTZVSO.css"></noscript></head>
-<body>
-  <app-root></app-root>
-<script src="polyfills-RT5I6R6G.js" type="module"></script><script src="main-ITR33JCY.js" type="module"></script></body>
-</html>
+1const getTop10Pedidos = async () => {
+2  const params = {
+3    TableName: 'Pedidos',
+4    IndexName: 'ItemIndex',
+5    KeyConditionExpression: 'item_id = :item_id',
+6    ExpressionAttributeValues: {
+7      ':item_id': 'ITEM_ID_AQUI' // Substitua pelo ID do item que deseja consultar
+8    },
+9    ScanIndexForward: false, // Ordenação decrescente
+10    Limit: 10
+11  };
+12
+13  const result = await dynamodb.query(params).promise();
+14  return result.Items;
+15};
+Atualizar o estoque ao realizar um pedido:
+Subtraia a quantidade do item no estoque ao registrar um pedido.
+Exemplo:
+
+1const atualizarEstoque = async (itemId, quantidade) => {
+2  const params = {
+3    TableName: 'Estoque',
+4    Key: { item_id: { S: itemId } },
+5    UpdateExpression: 'SET stock_quantity = stock_quantity - :qtd',
+6    ExpressionAttributeValues: {
+7      ':qtd': { N: quantidade.toString() }
+8    },
+9    ConditionExpression: 'stock_quantity >= :qtd', // Garante que não fique negativo
+10    ReturnValues: 'UPDATED_NEW'
+11  };
+12
+13  try {
+14    const result = await dynamodb.updateItem(params).promise();
+15    console.log('Estoque atualizado:', result);
+16  } catch (error) {
+17    console.error('Erro ao atualizar estoque:', error);
+18  }
+19};
+Com essas tabelas e consultas, você terá uma base sólida para gerenciar pedidos e estoque no restaurante, além de responder perguntas como os itens mais pedidos.
+
